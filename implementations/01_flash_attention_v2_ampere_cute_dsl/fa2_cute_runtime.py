@@ -121,8 +121,9 @@ def _require_kernel_module() -> ModuleType:
     except Exception as exc:  # pragma: no cover - exercised only in a CuTe DSL env
         raise RuntimeError(
             "Unable to import the phase-1 CuTe DSL kernel. "
-            "Install a CUTLASS Python environment that exposes `cutlass.cute`, "
-            "`cutlass.torch`, and `cuda.bindings`."
+            "Install the official CuTe DSL package `nvidia-cutlass-dsl[cu13]` "
+            "(or a matching CUTLASS repo checkout via `python/CuTeDSL/setup.sh --cu13`) "
+            "so `cutlass.cute`, `cutlass.torch`, and `cuda.bindings` are available."
         ) from exc
 
 
