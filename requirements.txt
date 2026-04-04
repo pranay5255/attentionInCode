@@ -1,0 +1,14 @@
+# Core ML / GPU framework
+torch==2.11.0
+
+# Triton JIT compiler for custom GPU kernels
+triton==3.6.0
+
+# CUTLASS CuTe DSL — Python kernel generator for Ampere/Hopper/Blackwell
+# Requires CUDA Toolkit 12.9 (matches Modal B200/H200 images)
+nvidia-cutlass-dsl
+
+# Notebook / benchmarking utilities
+matplotlib
+pandas
+pytest
