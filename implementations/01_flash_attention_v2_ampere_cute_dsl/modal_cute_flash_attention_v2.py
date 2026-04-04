@@ -39,12 +39,11 @@ app = modal.App("cute-phase1-flash-attention-v2")
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    # CuTe DSL package names have shifted across CUTLASS releases; update here if your
-    # local wheel uses a different name than `cutlass`.
+    # `cutlass` on PyPI is not the CUTLASS Python DSL package and does not provide
+    # `cutlass.cute`. Use the official CuTe DSL wheel instead.
     .pip_install(
         "torch==2.11.0",
-        "cuda-python",
-        "cutlass",
+        "nvidia-cutlass-dsl[cu13]",
     )
     .add_local_file(RUNTIME_LOCAL_PATH, RUNTIME_REMOTE_PATH)
     .add_local_file(KERNEL_LOCAL_PATH, KERNEL_REMOTE_PATH)
@@ -94,7 +93,7 @@ def run_phase1_flash_attention():
     print("\nTakeaway:")
     print("- This harness keeps the study-order wrapper local while the full kernel body stays in cutlass_references/.")
     print("- The default suite runs one dense case and one causal case, both validated against PyTorch SDPA.")
-    print("- If the image cannot import `cutlass.cute`, adjust the pip package list in this file to match your CUTLASS Python build.")
+    print("- This image installs the official `nvidia-cutlass-dsl[cu13]` wheel so `cutlass.cute` is available at runtime.")
 
     return results
 
