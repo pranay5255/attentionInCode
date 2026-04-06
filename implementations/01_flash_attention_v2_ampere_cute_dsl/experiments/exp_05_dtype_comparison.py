@@ -22,6 +22,16 @@ from pathlib import Path
 
 import modal
 
+# Import our common utilities
+from experiment_utils import (
+    get_deep_device_info,
+    calculate_tps,
+    calculate_attention_flops,
+    print_hardware_analysis,
+    print_performance_analysis,
+    run_standard_attention_reference,
+)
+
 _THIS_FILE = Path(__file__).resolve()
 _REMOTE_REPO_ROOT = Path("/root")
 _REMOTE_IMPLEMENTATION_DIR = (
@@ -43,16 +53,25 @@ def _resolve_layout() -> tuple[Path, Path]:
 _IMPLEMENTATION_DIR, _REPO_ROOT = _resolve_layout()
 
 RUNTIME_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "fa2_cute_runtime.py")
-RUNTIME_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_cute_runtime.py"
+RUNTIME_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_cute_runtime.py"
+)
 
 KERNEL_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "flash_attention_v2.py")
-KERNEL_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/flash_attention_v2.py"
+KERNEL_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/flash_attention_v2.py"
+)
 
 INIT_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "__init__.py")
-INIT_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/__init__.py"
+INIT_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/__init__.py"
+)
 
 REFERENCE_LOCAL_PATH = str(
-    _REPO_ROOT / "cutlass_references" / "01_flash_attention_v2_ampere_cudedsl" / "flash_attention_v2.py"
+    _REPO_ROOT
+    / "cutlass_references"
+    / "01_flash_attention_v2_ampere_cudedsl"
+    / "flash_attention_v2.py"
 )
 REFERENCE_REMOTE_PATH = "/root/cutlass_references/01_flash_attention_v2_ampere_cudedsl/flash_attention_v2.py"
 
@@ -78,16 +97,20 @@ def _load_runtime(remote_path: str):
     return mod
 
 
-@app.function(image=image, gpu="A100", timeout=1800)
-def run_experiment():
+def run_experiment_core(gpu_type: str = "A100"):
+    """Core experiment logic that can run on different GPU types."""
     runtime = _load_runtime(RUNTIME_REMOTE_PATH)
 
-    print("=" * 90)
-    print("EXPERIMENT 05: DTYPE COMPARISON — FP16 vs BF16 Throughput + Accuracy")
-    print("=" * 90)
+    print_hardware_analysis(gpu_type, "Data Type Comparison")
 
     device = runtime.current_device_summary()
+    device_info = get_deep_device_info(gpu_type)
+    print("Runtime Device Info:")
     print(f"GPU: {device['device_name']}  |  Compute: {device['compute_capability']}")
+    print(f"Architecture: {device_info['architecture']}")
+    print(
+        f"Tensor Core Peak: {device_info['tensor_core_flops_bf16'] / 1e12:.1f} TFLOPS BF16, {device_info['tensor_core_flops_fp16'] / 1e12:.1f} TFLOPS FP16"
+    )
     print()
 
     print("CONCEPT:")
@@ -104,6 +127,38 @@ def run_experiment():
     M_BLOCK = 128
     N_BLOCK = 64
     THREADS = 128
+
+    # First run Standard Attention baselines for both dtypes
+    print("STANDARD ATTENTION (PyTorch SDPA) BASELINES:")
+    print("-" * 60)
+    standard_results = []
+    for dtype_name in ["float16", "bfloat16"]:
+        print(
+            f"  Running Standard Attention {dtype_name} with seqlen=4096 ...",
+            flush=True,
+        )
+        try:
+            std_result = run_standard_attention_reference(
+                dtype_name=dtype_name,
+                batch_size=BATCH,
+                seqlen_q=4096,
+                seqlen_k=4096,
+                num_head=HEADS,
+                head_dim=HEAD_DIM,
+                is_causal=False,
+                iterations=5,
+                warmup_iterations=2,
+            )
+            standard_results.append(std_result)
+            print(
+                f"  {dtype_name}: {std_result['avg_time_ms']:.4f} ms, {std_result['tflops_est']:.2f} TFLOPS"
+            )
+        except Exception as e:
+            print(f"  {dtype_name} failed: {e}")
+
+    print()
+    print("FLASH ATTENTION v2 DTYPE COMPARISON:")
+    print("-" * 60)
 
     dtypes = ["float16", "bfloat16"]
     seqlens = [1024, 2048, 4096, 8192]
@@ -130,31 +185,55 @@ def run_experiment():
                     iterations=5,
                     skip_ref_check=False,  # compare against PyTorch SDPA
                 )
+
+                # Enhanced metrics
+                flops = calculate_attention_flops(
+                    BATCH, seqlen, seqlen, HEADS, HEAD_DIM, False
+                )
+                tps = calculate_tps(r["avg_time_ms"], BATCH, seqlen, seqlen, HEADS)
+
+                r.update(
+                    {
+                        "tps": tps,
+                        "total_flops": flops,
+                        "gpu_type": gpu_type,
+                        "implementation": "FlashAttention_v2",
+                    }
+                )
                 results.append(r)
             except Exception as e:
                 print(f"    RESULT: {e}")
                 # Record that validation passed or failed
-                results.append({
-                    "name": tag,
-                    "dtype": dtype_name,
-                    "seqlen_q": seqlen,
-                    "avg_time_ms": float("nan"),
-                    "tflops_est": float("nan"),
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "case_name": tag,
+                        "dtype": dtype_name,
+                        "seqlen_q": seqlen,
+                        "avg_time_ms": float("nan"),
+                        "tflops_est": float("nan"),
+                        "tps": float("nan"),
+                        "error": str(e),
+                        "gpu_type": gpu_type,
+                        "implementation": "FlashAttention_v2",
+                    }
+                )
 
     print()
-    print(f"{'dtype':>8} | {'seqlen':>7} | {'ms':>10} | {'TFLOPS':>10} | {'ref_ok':>7}")
-    print("-" * 52)
+    print(
+        f"{'dtype':>8} | {'seqlen':>7} | {'ms':>10} | {'TFLOPS':>10} | {'TPS(M)':>9} | {'ref_ok':>7}"
+    )
+    print("-" * 63)
     for r in results:
         ref_ok = "PASS" if r.get("validated_against_sdpa", False) else "FAIL"
         ms = r.get("avg_time_ms", float("nan"))
         tflops = r.get("tflops_est", float("nan"))
+        tps_m = r.get("tps", 0) / 1e6
         print(
-            f"{r['dtype']:>8} | "
+            f"{r.get('dtype', 'N/A'):>8} | "
             f"{r['seqlen_q']:>7} | "
             f"{ms:>10.4f} | "
             f"{tflops:>10.2f} | "
+            f"{tps_m:>9.1f} | "
             f"{ref_ok:>7}"
         )
 
@@ -164,25 +243,90 @@ def run_experiment():
     print(f"{'seqlen':>7} | {'fp16_ms':>10} | {'bf16_ms':>10} | {'ratio':>7}")
     print("-" * 42)
     for seqlen in seqlens:
-        fp16 = [r for r in results if r.get("dtype") == "float16" and r.get("seqlen_q") == seqlen]
-        bf16 = [r for r in results if r.get("dtype") == "bfloat16" and r.get("seqlen_q") == seqlen]
+        fp16 = [
+            r
+            for r in results
+            if r.get("dtype") == "float16" and r.get("seqlen_q") == seqlen
+        ]
+        bf16 = [
+            r
+            for r in results
+            if r.get("dtype") == "bfloat16" and r.get("seqlen_q") == seqlen
+        ]
         if fp16 and bf16:
             fp16_ms = fp16[0].get("avg_time_ms", float("nan"))
             bf16_ms = bf16[0].get("avg_time_ms", float("nan"))
             ratio = fp16_ms / bf16_ms if bf16_ms and bf16_ms > 0 else float("nan")
             print(f"{seqlen:>7} | {fp16_ms:>10.4f} | {bf16_ms:>10.4f} | {ratio:>7.3f}")
 
-    print()
-    print("INTERPRETATION:")
-    print("  • FP16 and BF16 should show nearly identical TFLOPS (ratio ≈ 1.0).")
-    print("  • Both pass the reference check (atol=1e-2, rtol=1e-4) against PyTorch SDPA.")
-    print("  • BF16 is preferred for training (larger exponent range → fewer overflows).")
-    print("  • FP16 may give slightly tighter error bounds due to 3 extra mantissa bits.")
-    print("  • Key insight: dtype choice is about numerical properties, not speed on A100.")
+    # Performance analysis
+    valid_results = [
+        r for r in results if not math.isnan(r.get("avg_time_ms", float("nan")))
+    ]
+    print_performance_analysis(valid_results, gpu_type, "Data Type Comparison")
 
-    return results
+    print()
+    print("HARDWARE-SOFTWARE DTYPE ANALYSIS:")
+    print("=" * 80)
+    print(f"TENSOR CORE ARCHITECTURE: {device_info['architecture']}")
+    print(
+        f"  • FP16 throughput: {device_info['tensor_core_flops_fp16'] / 1e12:.1f} TFLOPS"
+    )
+    print(
+        f"  • BF16 throughput: {device_info['tensor_core_flops_bf16'] / 1e12:.1f} TFLOPS"
+    )
+    print("  • Same peak throughput for both precisions on modern GPUs")
+    print()
+    print("NUMERICAL PROPERTIES:")
+    print("  • FP16: 1 sign + 5 exp + 10 mantissa = higher precision")
+    print("  • BF16: 1 sign + 8 exp + 7 mantissa = larger dynamic range")
+    print("  • Accuracy differences matter for softmax numerical stability")
+
+    # Combine results for return
+    all_results = {
+        "flash_attention": results,
+        "standard_attention": standard_results,
+        "gpu_type": gpu_type,
+        "experiment": "dtype_comparison",
+    }
+    return all_results
+
+
+# GPU-specific Modal functions
+@app.function(image=image, gpu="A100", timeout=1800)
+def run_experiment_a100():
+    return run_experiment_core("A100")
+
+
+@app.function(image=image, gpu="H100", timeout=1800)
+def run_experiment_h100():
+    return run_experiment_core("H100")
+
+
+@app.function(image=image, gpu="B200", timeout=1800)
+def run_experiment_b200():
+    return run_experiment_core("B200")
+
+
+# Note: RTX 4090 not currently supported by Modal cloud
+# @app.function(image=image, gpu="4090", timeout=1800)
+# def run_experiment_4090():
+#     return run_experiment_core("4090")
 
 
 @app.local_entrypoint()
-def main():
-    run_experiment.remote()
+def main_a100():
+    """Run experiment on A100 GPU."""
+    return run_experiment_a100.remote()
+
+
+@app.local_entrypoint()
+def main_h100():
+    """Run experiment on H100 GPU."""
+    return run_experiment_h100.remote()
+
+
+@app.local_entrypoint()
+def main_b200():
+    """Run experiment on B200 GPU."""
+    return run_experiment_b200.remote()
