@@ -1,0 +1,20 @@
+[project]
+name = "attention-in-code"
+version = "0.1.0"
+description = "Deep dive into attention mechanisms and GPU optimization"
+requires-python = ">=3.11"
+dependencies = [
+    "torch==2.11.0",
+    "triton==3.6.0",
+    "nvidia-cutlass-dsl",
+    "matplotlib",
+    "pandas",
+    "pytest",
+]
+
+[tool.uv]
+dev-dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
