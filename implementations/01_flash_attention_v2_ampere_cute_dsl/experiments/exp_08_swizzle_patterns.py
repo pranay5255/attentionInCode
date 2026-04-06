@@ -21,10 +21,26 @@ Usage:
 from __future__ import annotations
 
 import importlib.util
+import math
 import sys
 from pathlib import Path
 
 import modal
+
+# Import our common utilities
+import sys
+
+sys.path.append(
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments"
+)
+from experiment_utils import (
+    get_deep_device_info,
+    calculate_tps,
+    calculate_attention_flops,
+    print_hardware_analysis,
+    print_performance_analysis,
+    run_standard_attention_reference,
+)
 
 _THIS_FILE = Path(__file__).resolve()
 _REMOTE_REPO_ROOT = Path("/root")
@@ -48,24 +64,39 @@ def _resolve_layout() -> tuple[Path, Path, Path]:
 _IMPLEMENTATION_DIR, _EXPERIMENTS_DIR, _REPO_ROOT = _resolve_layout()
 
 RUNTIME_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "fa2_cute_runtime.py")
-RUNTIME_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_cute_runtime.py"
+RUNTIME_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_cute_runtime.py"
+)
 
 KERNEL_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "flash_attention_v2.py")
-KERNEL_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/flash_attention_v2.py"
+KERNEL_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/flash_attention_v2.py"
+)
 
 INIT_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "__init__.py")
-INIT_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/__init__.py"
+INIT_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/__init__.py"
+)
 
 REFERENCE_LOCAL_PATH = str(
-    _REPO_ROOT / "cutlass_references" / "01_flash_attention_v2_ampere_cudedsl" / "flash_attention_v2.py"
+    _REPO_ROOT
+    / "cutlass_references"
+    / "01_flash_attention_v2_ampere_cudedsl"
+    / "flash_attention_v2.py"
 )
 REFERENCE_REMOTE_PATH = "/root/cutlass_references/01_flash_attention_v2_ampere_cudedsl/flash_attention_v2.py"
 
-SWIZZLE_VARIANTS_LOCAL_PATH = str(_EXPERIMENTS_DIR / "exp_08_kernel_swizzle_variants.py")
+SWIZZLE_VARIANTS_LOCAL_PATH = str(
+    _EXPERIMENTS_DIR / "exp_08_kernel_swizzle_variants.py"
+)
 SWIZZLE_VARIANTS_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_kernel_swizzle_variants.py"
 
 EXPERIMENTS_INIT_LOCAL_PATH = str(_EXPERIMENTS_DIR / "__init__.py")
 EXPERIMENTS_INIT_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/__init__.py"
+
+# Add experiment utilities
+EXPERIMENT_UTILS_LOCAL_PATH = str(_THIS_FILE.parent / "experiment_utils.py")
+EXPERIMENT_UTILS_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/experiment_utils.py"
 
 app = modal.App("exp-08-swizzle-patterns")
 
@@ -78,6 +109,7 @@ image = (
     .add_local_file(REFERENCE_LOCAL_PATH, REFERENCE_REMOTE_PATH)
     .add_local_file(SWIZZLE_VARIANTS_LOCAL_PATH, SWIZZLE_VARIANTS_REMOTE_PATH)
     .add_local_file(EXPERIMENTS_INIT_LOCAL_PATH, EXPERIMENTS_INIT_REMOTE_PATH)
+    .add_local_file(EXPERIMENT_UTILS_LOCAL_PATH, EXPERIMENT_UTILS_REMOTE_PATH)
 )
 
 
@@ -188,7 +220,9 @@ def run_experiment():
 
     # Results table
     print()
-    print(f"{'variant':>14} | {'swizzle':>8} | {'seqlen':>7} | {'ms':>10} | {'TFLOPS':>10}")
+    print(
+        f"{'variant':>14} | {'swizzle':>8} | {'seqlen':>7} | {'ms':>10} | {'TFLOPS':>10}"
+    )
     print("-" * 58)
     for r in results:
         print(
@@ -202,16 +236,38 @@ def run_experiment():
     # Speedup analysis relative to no_swizzle
     print()
     print("SPEEDUP vs NO SWIZZLE:")
-    print(f"{'seqlen':>7} | {'no_swizzle_ms':>14} | {'2bit_speedup':>13} | {'3bit_speedup':>13}")
+    print(
+        f"{'seqlen':>7} | {'no_swizzle_ms':>14} | {'2bit_speedup':>13} | {'3bit_speedup':>13}"
+    )
     print("-" * 55)
     for seqlen in seqlens:
-        no_sw = [r for r in results if r["variant"] == "no_swizzle" and r.get("seqlen") == seqlen]
-        sw2 = [r for r in results if r["variant"] == "swizzle_2bit" and r.get("seqlen") == seqlen]
-        sw3 = [r for r in results if r["variant"] == "swizzle_3bit" and r.get("seqlen") == seqlen]
+        no_sw = [
+            r
+            for r in results
+            if r["variant"] == "no_swizzle" and r.get("seqlen") == seqlen
+        ]
+        sw2 = [
+            r
+            for r in results
+            if r["variant"] == "swizzle_2bit" and r.get("seqlen") == seqlen
+        ]
+        sw3 = [
+            r
+            for r in results
+            if r["variant"] == "swizzle_3bit" and r.get("seqlen") == seqlen
+        ]
         if no_sw:
             base_ms = no_sw[0]["avg_time_ms"]
-            s2 = base_ms / sw2[0]["avg_time_ms"] if sw2 and sw2[0]["avg_time_ms"] > 0 else float("nan")
-            s3 = base_ms / sw3[0]["avg_time_ms"] if sw3 and sw3[0]["avg_time_ms"] > 0 else float("nan")
+            s2 = (
+                base_ms / sw2[0]["avg_time_ms"]
+                if sw2 and sw2[0]["avg_time_ms"] > 0
+                else float("nan")
+            )
+            s3 = (
+                base_ms / sw3[0]["avg_time_ms"]
+                if sw3 and sw3[0]["avg_time_ms"] > 0
+                else float("nan")
+            )
             print(f"{seqlen:>7} | {base_ms:>14.4f} | {s2:>12.2f}× | {s3:>12.2f}×")
 
     print()
@@ -227,12 +283,18 @@ def run_experiment():
     print("    (d=128, bf16).  Each thread in a warp hits a different bank.")
     print()
     print("  • The speedup from 0-bit to 3-bit swizzle can be 1.2-1.5× or more,")
-    print("    showing that bank conflicts are a major bottleneck in SMEM-heavy kernels.")
+    print(
+        "    showing that bank conflicts are a major bottleneck in SMEM-heavy kernels."
+    )
     print()
     print("  KEY INSIGHT: CuTe's swizzle is not just an optimization — it's essential.")
-    print("  Without it, shared memory becomes the bottleneck, not global memory or compute.")
+    print(
+        "  Without it, shared memory becomes the bottleneck, not global memory or compute."
+    )
     print("  This is the 'aha moment' for understanding CuTe layouts:")
-    print("  the layout isn't just about logical indexing, it's about physical bank mapping.")
+    print(
+        "  the layout isn't just about logical indexing, it's about physical bank mapping."
+    )
 
     return results
 
