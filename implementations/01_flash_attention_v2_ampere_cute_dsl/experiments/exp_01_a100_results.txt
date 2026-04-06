@@ -1,0 +1,240 @@
+✓ Initialized. View run at 
+https://modal.com/apps/pranay5255-80470/main/ap-F3QzEWzcD1hMZKk9NuoRP1
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/attentionInCode/implementations/01_flash_attention_v2_amper
+│   e_cute_dsl/experiments/exp_01_sequence_length_scaling.py
+├── 🔨 Created mount 
+│   /home/pranay5255/attentionInCode/implementations/01_flash_attention_v2_amper
+│   e_cute_dsl/experiments/experiment_utils.py
+├── 🔨 Created mount 
+│   /home/pranay5255/attentionInCode/cutlass_references/01_flash_attention_v2_am
+│   pere_cudedsl/flash_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/attentionInCode/implementations/01_flash_attention_v2_amper
+│   e_cute_dsl/flash_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/attentionInCode/implementations/01_flash_attention_v2_amper
+│   e_cute_dsl/__init__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/attentionInCode/implementations/01_flash_attention_v2_amper
+│   e_cute_dsl/fa2_cute_runtime.py
+├── 🔨 Created function run_experiment_a100.
+├── 🔨 Created function run_experiment_h100.
+└── 🔨 Created function run_experiment_b200.
+====================================================================================================
+HARDWARE ANALYSIS: SEQUENCE LENGTH SCALING ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+GPU Architecture:      Ampere (sm_80)
+Tensor Core Throughput: 312.0 TFLOPS (FP16/BF16)
+HBM Bandwidth:          1.555 TB/s (1555 GB/s)
+Shared Memory/SM:       160 KB
+SM Count:               108
+Max Threads/SM:         2048
+Max Warps/SM:           64
+
+Runtime Device Info:
+GPU: NVIDIA A100-SXM4-40GB  |  Compute: 8.0
+Architecture: Ampere
+Peak Tensor Core: 312.0 TFLOPS BF16
+HBM Bandwidth: 1555 GB/s
+
+CONCEPT:
+  FlashAttention does 4·B·H·Sq·Sk·d FLOPs per forward pass.
+  At short seqlens, the kernel spends most time loading Q/K/V tiles
+  (memory-bound).  As seqlen grows, each tile does proportionally more
+  compute relative to bytes moved, pushing toward the compute roofline.
+
+STANDARD ATTENTION (PyTorch SDPA) REFERENCE:
+------------------------------------------------------------
+  Running Standard Attention seqlen=128 ...
+  Running Standard Attention seqlen=256 ...
+  Running Standard Attention seqlen=512 ...
+  Running Standard Attention seqlen=1024 ...
+  Running Standard Attention seqlen=2048 ...
+  Running Standard Attention seqlen=4096 ...
+  Running Standard Attention seqlen=8192 ...
+
+FLASH ATTENTION v2 RESULTS:
+------------------------------------------------------------
+  Running Flash Attention seqlen=128 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 128
+  seqlen_k: 128
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+  Running Flash Attention seqlen=256 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 256
+  seqlen_k: 256
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+  Running Flash Attention seqlen=512 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 512
+  seqlen_k: 512
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+  Running Flash Attention seqlen=1024 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 1024
+  seqlen_k: 1024
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+  Running Flash Attention seqlen=2048 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 2048
+  seqlen_k: 2048
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+  Running Flash Attention seqlen=4096 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+  Running Flash Attention seqlen=8192 ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 8192
+  seqlen_k: 8192
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+
+  seqlen |         ms |     TFLOPS |    TPS (M) |  Arith Intensity
+--------------------------------------------------------------------
+     128 |     0.0229 |       5.85 |       89.3 |             64.0
+     256 |     0.0240 |      22.41 |      170.9 |            128.0
+     512 |     0.0313 |      68.53 |      261.4 |            256.0
+    1024 |     0.0926 |      92.79 |      177.0 |            512.0
+    2048 |     0.2650 |     129.65 |      123.6 |           1024.0
+    4096 |     0.8370 |     164.20 |       78.3 |           2048.0
+    8192 |     3.2627 |     168.50 |       40.2 |           4096.0
+
+STANDARD ATTENTION vs FLASH ATTENTION COMPARISON:
+--------------------------------------------------------------------------------
+  seqlen |     Std ms |   Flash ms |    Speedup |   Std TFLOPS | Flash TFLOPS
+--------------------------------------------------------------------------------
+     128 |     0.0517 |     0.0229 |       2.25x |      2596.63 |         5.85
+     256 |     0.0615 |     0.0240 |       2.57x |      8734.68 |        22.41
+     512 |     0.0899 |     0.0313 |       2.87x |     23879.11 |        68.53
+    1024 |     0.1258 |     0.0926 |       1.36x |     68288.09 |        92.79
+    2048 |     0.3107 |     0.2650 |       1.17x |    110602.60 |       129.65
+    4096 |     0.9156 |     0.8370 |       1.09x |    150112.17 |       164.20
+    8192 |     3.4594 |     3.2627 |       1.06x |    158918.44 |       168.50
+====================================================================================================
+PERFORMANCE ANALYSIS: SEQUENCE LENGTH SCALING ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+Peak TFLOPS Achieved:   168.50 TFLOPS
+Average TFLOPS:         93.13 TFLOPS
+Roofline Efficiency:    29.9% of peak 312.0 TFLOPS
+Peak TPS (Tokens/sec):  261.4M tokens/second
+
+
+HARDWARE-SOFTWARE CO-DESIGN ANALYSIS:
+================================================================================
+SOFTWARE OPTIMIZATION PRINCIPLES:
+  • FlashAttention v2: Tiled GEMM with 128×64 blocks, 128 threads
+  • Shared memory usage: 64 KB per CTA
+  • MMA parallelism: 4 warps × 16×8×16 tensor cores per warp
+
+HARDWARE CONSTRAINTS & OPTIMIZATION:
+  • Ampere GPU: 108 SMs, 160 KB SMEM/SM
+  • Memory bandwidth: 1555 GB/s → Roofline limit
+  • Tensor cores: 312.0 TFLOPS BF16 peak
+
+PERFORMANCE BREAKDOWN:
+  • Short sequences (128-512): Memory-bound (arithmetic intensity < 32)
+    → HBM bandwidth limits performance, not compute
+  • Long sequences (2048+): Compute-bound (arithmetic intensity > 512)
+    → Tensor core throughput becomes the bottleneck
+
+SOFTWARE-HARDWARE COEVOLUTION:
+  • FlashAttention's tiling strategy specifically designed for GPU memory hierarchy
+  • SMEM reduces HBM traffic by 10-100× vs naive attention
+  • Block-level causal masking enables ~2× speedup with minimal overhead
+  • Kernel fusion eliminates intermediate materialization of S=Q·K^T
+
+TPS SCALING ANALYSIS:
+  • TPS grows with seqlen until memory bandwidth saturates
+  • At scale, TPS becomes limited by total attention FLOPs processed
+  • Hardware parallelism (SMs × warps) determines max TPS throughput
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/pranay5255-80470/main/ap-F3QzEWzcD1hMZKk9NuoRP1
