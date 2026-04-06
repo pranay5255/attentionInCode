@@ -1,0 +1,15 @@
+Multi-GPU Flash Attention Benchmark Suite
+Started: Mon Apr  6 20:47:58 UTC 2026
+Output Directory: /home/pranay5255/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/results_20260406_204758
+==========================================
+Starting Multi-GPU Flash Attention Benchmark Suite
+Experiments: 8 total
+GPU Types: A100 H100 B200
+
+Checking availability of A100...
+✗ A100 is not available or timed out
+Checking availability of H100...
+✗ H100 is not available or timed out
+Checking availability of B200...
+✗ B200 is not available or timed out
+ERROR: No GPUs available for benchmarking!
