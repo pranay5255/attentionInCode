@@ -23,6 +23,16 @@ from pathlib import Path
 
 import modal
 
+# Import our common utilities
+from experiment_utils import (
+    get_deep_device_info,
+    calculate_tps,
+    calculate_attention_flops,
+    print_hardware_analysis,
+    print_performance_analysis,
+    run_standard_attention_reference,
+)
+
 _THIS_FILE = Path(__file__).resolve()
 _REMOTE_REPO_ROOT = Path("/root")
 _REMOTE_IMPLEMENTATION_DIR = (
@@ -44,16 +54,25 @@ def _resolve_layout() -> tuple[Path, Path]:
 _IMPLEMENTATION_DIR, _REPO_ROOT = _resolve_layout()
 
 RUNTIME_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "fa2_cute_runtime.py")
-RUNTIME_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_cute_runtime.py"
+RUNTIME_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_cute_runtime.py"
+)
 
 KERNEL_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "flash_attention_v2.py")
-KERNEL_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/flash_attention_v2.py"
+KERNEL_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/flash_attention_v2.py"
+)
 
 INIT_LOCAL_PATH = str(_IMPLEMENTATION_DIR / "__init__.py")
-INIT_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/__init__.py"
+INIT_REMOTE_PATH = (
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/__init__.py"
+)
 
 REFERENCE_LOCAL_PATH = str(
-    _REPO_ROOT / "cutlass_references" / "01_flash_attention_v2_ampere_cudedsl" / "flash_attention_v2.py"
+    _REPO_ROOT
+    / "cutlass_references"
+    / "01_flash_attention_v2_ampere_cudedsl"
+    / "flash_attention_v2.py"
 )
 REFERENCE_REMOTE_PATH = "/root/cutlass_references/01_flash_attention_v2_ampere_cudedsl/flash_attention_v2.py"
 
@@ -88,22 +107,27 @@ def _smem_bytes(m: int, n: int, d_padded: int) -> int:
     return (m * d_padded + n * d_padded * 2) * 2
 
 
-@app.function(image=image, gpu="A100", timeout=1800)
-def run_experiment():
+def run_experiment_core(gpu_type: str = "A100"):
+    """Core experiment logic that can run on different GPU types."""
     runtime = _load_runtime(RUNTIME_REMOTE_PATH)
 
-    print("=" * 90)
-    print("EXPERIMENT 04: HEAD DIMENSION — K-dim, Padding Waste, Shared Memory Footprint")
-    print("=" * 90)
+    print_hardware_analysis(gpu_type, "Head Dimension Analysis")
 
     device = runtime.current_device_summary()
+    device_info = get_deep_device_info(gpu_type)
+    print("Runtime Device Info:")
     print(f"GPU: {device['device_name']}  |  Compute: {device['compute_capability']}")
+    print(f"Architecture: {device_info['architecture']}")
+    print(f"Shared Memory/SM: {device_info['smem_per_sm_bytes'] / 1024:.0f} KB")
+    print(f"HBM Bandwidth: {device_info['peak_memory_bw_gbps']} GB/s")
     print()
 
     print("CONCEPT:")
     print("  head_dim is the K dimension of both GEMMs (S=Q·K^T and O=P·V).")
     print("  The kernel pads head_dim up to a multiple of 32 for alignment.")
-    print("  Each MMA k-iteration processes 16 elements, so mma_k_iters = padded_dim // 16.")
+    print(
+        "  Each MMA k-iteration processes 16 elements, so mma_k_iters = padded_dim // 16."
+    )
     print("  Shared memory = (m·d_pad + 2·n·d_pad) × 2 bytes.")
     print()
 
@@ -115,6 +139,35 @@ def run_experiment():
     THREADS = 128
     DTYPE = "bfloat16"
 
+    # First run Standard Attention baseline (single configuration for comparison)
+    print("STANDARD ATTENTION (PyTorch SDPA) BASELINE:")
+    print("-" * 60)
+    print(
+        "  Running Standard Attention with d=128 (common configuration) ...", flush=True
+    )
+    try:
+        standard_result = run_standard_attention_reference(
+            dtype_name=DTYPE,
+            batch_size=BATCH,
+            seqlen_q=SEQLEN,
+            seqlen_k=SEQLEN,
+            num_head=HEADS,
+            head_dim=128,  # Use common head dimension
+            is_causal=False,
+            iterations=5,
+            warmup_iterations=2,
+        )
+        print(
+            f"  Standard Attention: {standard_result['avg_time_ms']:.4f} ms, {standard_result['tflops_est']:.2f} TFLOPS"
+        )
+    except Exception as e:
+        print(f"  Standard Attention failed: {e}")
+        standard_result = None
+
+    print()
+    print("FLASH ATTENTION v2 HEAD DIMENSION SWEEP:")
+    print("-" * 60)
+
     head_dims = [32, 64, 96, 128, 160, 192, 256]
 
     results = []
@@ -125,11 +178,31 @@ def run_experiment():
         waste_pct = ((d_pad - d) / d_pad) * 100 if d_pad > 0 else 0
         tag = f"d{d}"
 
-        if smem > 163840:
-            print(f"  {tag:>6}  padded={d_pad:>4}  smem={smem:>7} B  SKIPPED: exceeds smem")
+        if smem > device_info["max_smem_per_block_bytes"]:
+            print(
+                f"  {tag:>6}  padded={d_pad:>4}  smem={smem:>7} B  SKIPPED: exceeds {device_info['max_smem_per_block_bytes']} B smem"
+            )
+            results.append(
+                {
+                    "case_name": tag,
+                    "head_dim": d,
+                    "padded_dim": d_pad,
+                    "smem_bytes": smem,
+                    "mma_k_iters": k_iters,
+                    "waste_pct": waste_pct,
+                    "avg_time_ms": float("nan"),
+                    "tflops_est": float("nan"),
+                    "smem_limit_exceeded": True,
+                    "gpu_type": gpu_type,
+                    "implementation": "FlashAttention_v2",
+                }
+            )
             continue
 
-        print(f"  {tag:>6}  padded={d_pad:>4}  smem={smem:>7} B  k_iters={k_iters}  running ...", flush=True)
+        print(
+            f"  {tag:>6}  padded={d_pad:>4}  smem={smem:>7} B  k_iters={k_iters}  running ...",
+            flush=True,
+        )
         try:
             r = runtime.run_case(
                 case_name=tag,
@@ -147,40 +220,189 @@ def run_experiment():
                 iterations=5,
                 skip_ref_check=True,
             )
-            r["padded_dim"] = d_pad
-            r["smem_bytes"] = smem
-            r["mma_k_iters"] = k_iters
-            r["waste_pct"] = waste_pct
+
+            # Enhanced metrics
+            flops = calculate_attention_flops(BATCH, SEQLEN, SEQLEN, HEADS, d, False)
+            tps = calculate_tps(r["avg_time_ms"], BATCH, SEQLEN, SEQLEN, HEADS)
+
+            r.update(
+                {
+                    "padded_dim": d_pad,
+                    "smem_bytes": smem,
+                    "mma_k_iters": k_iters,
+                    "waste_pct": waste_pct,
+                    "tps": tps,
+                    "total_flops": flops,
+                    "gpu_type": gpu_type,
+                    "implementation": "FlashAttention_v2",
+                }
+            )
             results.append(r)
         except Exception as e:
             print(f"    SKIPPED: {e}")
+            # Record failed configurations as valuable data points
+            results.append(
+                {
+                    "case_name": tag,
+                    "head_dim": d,
+                    "padded_dim": d_pad,
+                    "smem_bytes": smem,
+                    "mma_k_iters": k_iters,
+                    "waste_pct": waste_pct,
+                    "avg_time_ms": float("nan"),
+                    "tflops_est": float("nan"),
+                    "error": str(e),
+                    "gpu_type": gpu_type,
+                    "implementation": "FlashAttention_v2",
+                }
+            )
 
     print()
-    print(f"{'d':>4} | {'d_pad':>6} | {'waste%':>7} | {'smem(B)':>8} | {'k_iters':>8} | {'ms':>10} | {'TFLOPS':>10}")
-    print("-" * 68)
+    print(
+        f"{'d':>4} | {'d_pad':>6} | {'waste%':>7} | {'smem(KB)':>9} | {'k_iters':>8} | {'ms':>10} | {'TFLOPS':>10} | {'TPS(M)':>9}"
+    )
+    print("-" * 80)
     for r in results:
+        smem_kb = r["smem_bytes"] / 1024
+        tps_m = r.get("tps", 0) / 1e6
+        ms = r.get("avg_time_ms", float("nan"))
+        tflops = r.get("tflops_est", float("nan"))
+
         print(
             f"{r['head_dim']:>4} | "
-            f"{r['padded_dim']:>6} | "
-            f"{r['waste_pct']:>6.1f}% | "
-            f"{r['smem_bytes']:>8} | "
-            f"{r['mma_k_iters']:>8} | "
-            f"{r['avg_time_ms']:>10.4f} | "
-            f"{r['tflops_est']:>10.2f}"
+            f"{r.get('padded_dim', 0):>6} | "
+            f"{r.get('waste_pct', 0):>6.1f}% | "
+            f"{smem_kb:>9.1f} | "
+            f"{r.get('mma_k_iters', 0):>8} | "
+            f"{ms:>10.4f} | "
+            f"{tflops:>10.2f} | "
+            f"{tps_m:>9.1f}"
         )
 
-    print()
-    print("INTERPRETATION:")
-    print("  • d=128 is the Ampere sweet spot: no padding waste, d_pad=128, smem fits well.")
-    print("  • d=96 pads to 128 → 25% of MMA iterations compute on zero-padded data.")
-    print("  • d=256 doubles smem usage vs d=128 → may reduce occupancy significantly.")
-    print("  • TFLOPS calculation uses actual d (not padded), so padded configs look 'slower'")
-    print("    because the kernel does extra work on padding that doesn't count as useful FLOPs.")
-    print("  • Key insight: choose head_dim as a multiple of 32 (ideally 64/128) to avoid waste.")
+    # Comparison with standard attention
+    if standard_result and results:
+        valid_results = [
+            r
+            for r in results
+            if not r.get("smem_limit_exceeded", False)
+            and not math.isnan(r.get("avg_time_ms", float("nan")))
+        ]
+        if valid_results:
+            best_flash = max(valid_results, key=lambda x: x.get("tflops_est", 0))
+            speedup = (
+                standard_result["avg_time_ms"] / best_flash["avg_time_ms"]
+                if best_flash["avg_time_ms"] > 0
+                else float("nan")
+            )
 
-    return results
+            print()
+            print("STANDARD vs FLASH ATTENTION COMPARISON:")
+            print("-" * 60)
+            print(
+                f"Standard Attention: {standard_result['avg_time_ms']:.4f} ms, {standard_result['tflops_est']:.2f} TFLOPS"
+            )
+            print(
+                f"Best Flash config:   d={best_flash['head_dim']} (padded to {best_flash.get('padded_dim', 0)})"
+            )
+            print(
+                f"Flash Attention:     {best_flash['avg_time_ms']:.4f} ms, {best_flash['tflops_est']:.2f} TFLOPS"
+            )
+            print(f"Speedup:             {speedup:.2f}x")
+
+    # Performance analysis
+    valid_results = [
+        r
+        for r in results
+        if not r.get("smem_limit_exceeded", False)
+        and not math.isnan(r.get("avg_time_ms", float("nan")))
+    ]
+    print_performance_analysis(valid_results, gpu_type, "Head Dimension Analysis")
+
+    print()
+    print("HARDWARE-SOFTWARE HEAD DIMENSION ANALYSIS:")
+    print("=" * 80)
+    print("PADDING & SHARED MEMORY TRADEOFFS:")
+    print(
+        f"  • {device_info['architecture']} GPU: SMEM padded to multiples of 32 for alignment"
+    )
+    print("  • Padding formula: d_padded = ceil(d / 32) × 32")
+    print("  • Shared memory: (m×d_pad + n×d_pad×2) × 2 bytes")
+    print("  • MMA k-iterations: k_iters = d_padded ÷ 16")
+    print()
+    print("EFFICIENCY ANALYSIS:")
+    print("  • Waste percentage: ((d_padded - d) / d_padded) × 100")
+    print(
+        "  • TFLOPS calculated on actual d, not padded → padded configs appear slower"
+    )
+
+    for r in results:
+        if not r.get("smem_limit_exceeded", False) and not math.isnan(
+            r.get("avg_time_ms", float("nan"))
+        ):
+            d = r["head_dim"]
+            d_pad = r.get("padded_dim", 0)
+            waste = r.get("waste_pct", 0)
+            smem_kb = r["smem_bytes"] / 1024
+            tflops = r.get("tflops_est", 0)
+            print(
+                f"  • d={d}→{d_pad} ({waste:.1f}% waste): {smem_kb:.1f} KB SMEM, {tflops:.2f} TFLOPS"
+            )
+
+    print()
+    print("KEY INSIGHTS:")
+    print("  • Head dimension affects both compute and memory patterns")
+    print("  • Padding waste is architectural - not algorithmic")
+    print(
+        "  • Larger head dims increase SMEM pressure but may improve compute efficiency"
+    )
+    print("  • SMEM limits constrain maximum head dimension per GPU architecture")
+    print("  • This demonstrates hardware-imposed constraints on model design")
+
+    # Combine results for return
+    all_results = {
+        "flash_attention": results,
+        "standard_attention": [standard_result] if standard_result else [],
+        "gpu_type": gpu_type,
+        "experiment": "head_dimension",
+    }
+    return all_results
+
+
+# GPU-specific Modal functions
+@app.function(image=image, gpu="A100", timeout=1800)
+def run_experiment_a100():
+    return run_experiment_core("A100")
+
+
+@app.function(image=image, gpu="H100", timeout=1800)
+def run_experiment_h100():
+    return run_experiment_core("H100")
+
+
+@app.function(image=image, gpu="B200", timeout=1800)
+def run_experiment_b200():
+    return run_experiment_core("B200")
+
+
+# Note: RTX 4090 not currently supported by Modal cloud
+# @app.function(image=image, gpu="4090", timeout=1800)
+# def run_experiment_4090():
+#     return run_experiment_core("4090")
 
 
 @app.local_entrypoint()
-def main():
-    run_experiment.remote()
+def main_a100():
+    """Run experiment on A100 GPU."""
+    return run_experiment_a100.remote()
+
+
+@app.local_entrypoint()
+def main_h100():
+    """Run experiment on H100 GPU."""
+    return run_experiment_h100.remote()
+
+
+@app.local_entrypoint()
+def main_b200():
+    """Run experiment on B200 GPU."""
+    return run_experiment_b200.remote()
