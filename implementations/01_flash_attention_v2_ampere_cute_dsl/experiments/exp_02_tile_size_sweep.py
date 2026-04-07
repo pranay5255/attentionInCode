@@ -23,6 +23,9 @@ from pathlib import Path
 import modal
 
 # Import our common utilities
+sys.path.append(
+    "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments"
+)
 from experiment_utils import (
     get_deep_device_info,
     calculate_tps,
@@ -75,6 +78,10 @@ REFERENCE_LOCAL_PATH = str(
 )
 REFERENCE_REMOTE_PATH = "/root/cutlass_references/01_flash_attention_v2_ampere_cudedsl/flash_attention_v2.py"
 
+# Add experiment utilities
+EXPERIMENT_UTILS_LOCAL_PATH = str(_THIS_FILE.parent / "experiment_utils.py")
+EXPERIMENT_UTILS_REMOTE_PATH = "/root/implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/experiment_utils.py"
+
 app = modal.App("exp-02-tile-size-sweep")
 
 image = (
@@ -84,6 +91,7 @@ image = (
     .add_local_file(KERNEL_LOCAL_PATH, KERNEL_REMOTE_PATH)
     .add_local_file(INIT_LOCAL_PATH, INIT_REMOTE_PATH)
     .add_local_file(REFERENCE_LOCAL_PATH, REFERENCE_REMOTE_PATH)
+    .add_local_file(EXPERIMENT_UTILS_LOCAL_PATH, EXPERIMENT_UTILS_REMOTE_PATH)
 )
 
 
