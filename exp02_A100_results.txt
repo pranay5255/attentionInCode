@@ -1,0 +1,246 @@
+✓ Initialized. View run at https://modal.com/apps/pranay5255/main/ap-LDG51FWmUyRqc9lh6lFE7A
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/exp_02_tile_size_sweep.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/experiment_utils.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/01_flash_attention_v2_ampere_cudedsl/fla
+│   sh_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/__ini
+│   t__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_c
+│   ute_runtime.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/flash
+│   _attention_v2.py
+├── 🔨 Created function run_experiment_a100.
+├── 🔨 Created function run_experiment_h100.
+└── 🔨 Created function run_experiment_b200.
+====================================================================================================
+HARDWARE ANALYSIS: TILE SIZE SWEEP ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+GPU Architecture:      Ampere (sm_80)
+Tensor Core Throughput: 312.0 TFLOPS (FP16/BF16)
+HBM Bandwidth:          1.555 TB/s (1555 GB/s)
+Shared Memory/SM:       160 KB
+SM Count:               108
+Max Threads/SM:         2048
+Max Warps/SM:           64
+
+Runtime Device Info:
+GPU: NVIDIA A100-SXM4-40GB  |  Compute: 8.0
+Architecture: Ampere
+Shared Memory/SM: 160 KB
+HBM Bandwidth: 1555 GB/s
+
+CONCEPT:
+  The kernel loads Q tiles of shape (m, d) and K/V tiles of shape (n, d).
+  Shared memory usage = (m·d + 2·n·d) × 2 bytes.
+  SM80 has 164 KB of shared memory per SM.
+  Larger tiles → better GMEM reuse but higher smem → fewer concurrent CTAs.
+
+STANDARD ATTENTION (PyTorch SDPA) BASELINE:
+------------------------------------------------------------
+  Running Standard Attention with 128×64 tiles (common configuration) ...
+  Standard Attention: 0.9262 ms, 148388.79 TFLOPS
+
+FLASH ATTENTION v2 TILE SIZE SWEEP:
+------------------------------------------------------------
+       m64_n32  smem=  32768 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 64
+  n_block_size: 32
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+       m64_n64  smem=  49152 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 64
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+      m64_n128  smem=  81920 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 64
+  n_block_size: 128
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+      m128_n32  smem=  49152 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 32
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+      m128_n64  smem=  65536 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+     m128_n128  smem=  98304 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 128
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+      m256_n64  smem=  98304 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 256
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+     m256_n128  smem= 131072 B  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 256
+  n_block_size: 128
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+
+      (m, n) |  smem (KB) |         ms |     TFLOPS |    TPS (M) |  Occupancy
+------------------------------------------------------------------------------
+     (64,32) |       32.0 |     1.0813 |     127.10 |       60.6 |       1.00
+     (64,64) |       48.0 |     0.9265 |     148.34 |       70.7 |       1.00
+    (64,128) |       80.0 |     0.8878 |     154.81 |       73.8 |       1.00
+    (128,32) |       48.0 |     0.9204 |     149.33 |       71.2 |       1.00
+    (128,64) |       64.0 |     0.8366 |     164.28 |       78.3 |       1.00
+   (128,128) |       96.0 |     1.2573 |     109.32 |       52.1 |       1.00
+    (256,64) |       96.0 |     4.4470 |      30.91 |       14.7 |       1.00
+   (256,128) |      128.0 |     9.5676 |      14.36 |        6.8 |       1.00
+
+STANDARD vs FLASH ATTENTION COMPARISON:
+------------------------------------------------------------
+Standard Attention: 0.9262 ms, 148388.79 TFLOPS
+Best Flash config:   128×64 tiles
+Flash Attention:     0.8366 ms, 164.28 TFLOPS
+Speedup:             1.11x
+====================================================================================================
+PERFORMANCE ANALYSIS: TILE SIZE SWEEP ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+Peak TFLOPS Achieved:   164.28 TFLOPS
+Average TFLOPS:         112.31 TFLOPS
+Roofline Efficiency:    36.0% of peak 312.0 TFLOPS
+Peak TPS (Tokens/sec):  78.3M tokens/second
+
+
+HARDWARE-SOFTWARE TILE SIZE ANALYSIS:
+================================================================================
+SHARED MEMORY CONSTRAINTS:
+  • Ampere GPU: 160 KB SMEM per SM
+  • Max SMEM per block: 160 KB
+  • SMEM usage = (m×d + n×d×2) × 2 bytes (Q + K + V tiles, BF16)
+
+OCCUPANCY ANALYSIS:
+  • 108 SMs × 64 warps/SM = 6912 total warps
+  • Each CTA uses 4 warps → max CTAs = 1728
+  • Large tiles reduce occupancy but increase data reuse
+
+TILE SIZE TRADEOFFS:
+  • (64,32): 32.0 KB SMEM, 1.0 occ, 127.10 TFLOPS
+  • (64,64): 48.0 KB SMEM, 1.0 occ, 148.34 TFLOPS
+  • (64,128): 80.0 KB SMEM, 1.0 occ, 154.81 TFLOPS
+  • (128,32): 48.0 KB SMEM, 1.0 occ, 149.33 TFLOPS
+  • (128,64): 64.0 KB SMEM, 1.0 occ, 164.28 TFLOPS
+  • (128,128): 96.0 KB SMEM, 1.0 occ, 109.32 TFLOPS
+  • (256,64): 96.0 KB SMEM, 1.0 occ, 30.91 TFLOPS
+  • (256,128): 128.0 KB SMEM, 1.0 occ, 14.36 TFLOPS
+
+KEY INSIGHTS:
+  • Tile size selection is hardware-specific optimization
+  • Larger tiles → better data reuse but lower occupancy
+  • Sweet spot balances SMEM usage vs parallelism
+  • Flash Attention's tiling fundamentally changes memory access patterns
+  • This is where software meets hardware: algorithmic choices fit architecture
+Stopping app - local entrypoint completed.
+✓ App completed. View run at https://modal.com/apps/pranay5255/main/ap-LDG51FWmUyRqc9lh6lFE7A
