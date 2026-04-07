@@ -1,0 +1,240 @@
+✓ Initialized. View run at https://modal.com/apps/pranay5255/main/ap-pdV5rtMhi71ZAM9eJt9NBx
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/exp_05_dtype_comparison.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/01_flash_attention_v2_ampere_cudedsl/fla
+│   sh_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/__ini
+│   t__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/experiment_utils.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/flash
+│   _attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_c
+│   ute_runtime.py
+├── 🔨 Created function run_experiment_a100.
+├── 🔨 Created function run_experiment_h100.
+└── 🔨 Created function run_experiment_b200.
+====================================================================================================
+HARDWARE ANALYSIS: DATA TYPE COMPARISON ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+GPU Architecture:      Ampere (sm_80)
+Tensor Core Throughput: 312.0 TFLOPS (FP16/BF16)
+HBM Bandwidth:          1.555 TB/s (1555 GB/s)
+Shared Memory/SM:       160 KB
+SM Count:               108
+Max Threads/SM:         2048
+Max Warps/SM:           64
+
+Runtime Device Info:
+GPU: NVIDIA A100-SXM4-40GB  |  Compute: 8.0
+Architecture: Ampere
+Tensor Core Peak: 312.0 TFLOPS BF16, 312.0 TFLOPS FP16
+
+CONCEPT:
+  Both FP16 and BF16 use 16 bits, but allocate them differently:
+    FP16:  1 sign + 5 exponent + 10 mantissa → higher precision
+    BF16:  1 sign + 8 exponent +  7 mantissa → larger dynamic range
+  A100 tensor cores handle both at the same peak throughput (~312 TFLOPS).
+  The accuracy difference matters for softmax numerical stability.
+
+STANDARD ATTENTION (PyTorch SDPA) BASELINES:
+------------------------------------------------------------
+  Running Standard Attention float16 with seqlen=4096 ...
+  float16: 0.9383 ms, 146480.85 TFLOPS
+  Running Standard Attention bfloat16 with seqlen=4096 ...
+  bfloat16: 0.9364 ms, 146771.76 TFLOPS
+
+FLASH ATTENTION v2 DTYPE COMPARISON:
+------------------------------------------------------------
+        flo_1024  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: Float16
+  batch_size: 1
+  seqlen_q: 1024
+  seqlen_k: 1024
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        flo_2048  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: Float16
+  batch_size: 1
+  seqlen_q: 2048
+  seqlen_k: 2048
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        flo_4096  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: Float16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        flo_8192  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: Float16
+  batch_size: 1
+  seqlen_q: 8192
+  seqlen_k: 8192
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        bfl_1024  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 1024
+  seqlen_k: 1024
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        bfl_2048  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 2048
+  seqlen_k: 2048
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        bfl_4096  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+        bfl_8192  running (with ref check) ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 8192
+  seqlen_k: 8192
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: False
+  use_cold_l2: False
+Results verified successfully!
+
+   dtype |  seqlen |         ms |     TFLOPS |    TPS(M) |  ref_ok
+---------------------------------------------------------------
+ float16 |    1024 |     0.0934 |      91.98 |     175.4 |    PASS
+ float16 |    2048 |     0.2646 |     129.85 |     123.8 |    PASS
+ float16 |    4096 |     0.8380 |     164.00 |      78.2 |    PASS
+ float16 |    8192 |     3.2549 |     168.90 |      40.3 |    PASS
+bfloat16 |    1024 |     0.0926 |      92.79 |     177.0 |    PASS
+bfloat16 |    2048 |     0.2646 |     129.85 |     123.8 |    PASS
+bfloat16 |    4096 |     0.8374 |     164.12 |      78.3 |    PASS
+bfloat16 |    8192 |     3.2547 |     168.91 |      40.3 |    PASS
+
+CROSS-DTYPE COMPARISON:
+ seqlen |    fp16_ms |    bf16_ms |   ratio
+------------------------------------------
+   1024 |     0.0934 |     0.0926 |   1.009
+   2048 |     0.2646 |     0.2646 |   1.000
+   4096 |     0.8380 |     0.8374 |   1.001
+   8192 |     3.2549 |     3.2547 |   1.000
+====================================================================================================
+PERFORMANCE ANALYSIS: DATA TYPE COMPARISON ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+Peak TFLOPS Achieved:   168.91 TFLOPS
+Average TFLOPS:         138.80 TFLOPS
+Roofline Efficiency:    44.5% of peak 312.0 TFLOPS
+Peak TPS (Tokens/sec):  177.0M tokens/second
+
+
+HARDWARE-SOFTWARE DTYPE ANALYSIS:
+================================================================================
+TENSOR CORE ARCHITECTURE: Ampere
+  • FP16 throughput: 312.0 TFLOPS
+  • BF16 throughput: 312.0 TFLOPS
+  • Same peak throughput for both precisions on modern GPUs
+
+NUMERICAL PROPERTIES:
+  • FP16: 1 sign + 5 exp + 10 mantissa = higher precision
+  • BF16: 1 sign + 8 exp + 7 mantissa = larger dynamic range
+  • Accuracy differences matter for softmax numerical stability
+Stopping app - local entrypoint completed.
+✓ App completed. View run at https://modal.com/apps/pranay5255/main/ap-pdV5rtMhi71ZAM9eJt9NBx
