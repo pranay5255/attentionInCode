@@ -1,0 +1,150 @@
+✓ Initialized. View run at https://modal.com/apps/pranay5255/main/ap-nF6JJFbVEemXMd6Kuk03mi
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/exp_03_thread_count.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/experiment_utils.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/01_flash_attention_v2_ampere_cudedsl/fla
+│   sh_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/__ini
+│   t__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/flash
+│   _attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_c
+│   ute_runtime.py
+├── 🔨 Created function run_experiment_a100.
+├── 🔨 Created function run_experiment_h100.
+└── 🔨 Created function run_experiment_b200.
+====================================================================================================
+HARDWARE ANALYSIS: THREAD COUNT ANALYSIS ON NVIDIA B200-SXM6-192GB
+====================================================================================================
+GPU Architecture:      Blackwell (sm_100)
+Tensor Core Throughput: 1800.0 TFLOPS (FP16/BF16)
+HBM Bandwidth:          8.000 TB/s (8000 GB/s)
+Shared Memory/SM:       250 KB
+SM Count:               144
+Max Threads/SM:         2048
+Max Warps/SM:           64
+
+Runtime Device Info:
+GPU: NVIDIA B200  |  Compute: 10.0
+Architecture: Blackwell
+Tensor Core Peak: 1800.0 TFLOPS BF16
+SM Count: 144
+
+CONCEPT:
+  CuTe DSL tiles the MMA as (num_threads//32, 1, 1) warps.
+  Each warp executes an Ampere MMA instruction (16×8×16).
+  The M dimension of the MMA tile = (threads//32) × 16.
+  More warps → larger MMA tile, more parallelism per CTA,
+  but also more registers → fewer CTAs can run simultaneously.
+
+STANDARD ATTENTION (PyTorch SDPA) BASELINE:
+------------------------------------------------------------
+  Running Standard Attention with 128 threads (common configuration) ...
+  Standard Attention: 0.1454 ms, 945017.63 TFLOPS
+
+FLASH ATTENTION v2 THREAD COUNT SWEEP:
+------------------------------------------------------------
+     t64  warps=2  mma_M= 32  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 64
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+    t128  warps=4  mma_M= 64  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+    t256  warps=8  mma_M=128  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 256
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+
+ threads |  warps |  MMA_M |         ms |     TFLOPS |    TPS (M) |   Occ
+------------------------------------------------------------------------
+      64 |      2 |     32 |     2.0265 |      67.82 |       32.3 |  1.00
+     128 |      4 |     64 |     0.3889 |     353.39 |      168.5 |  1.00
+     256 |      8 |    128 |     0.4569 |     300.80 |      143.4 |  0.50
+
+STANDARD vs FLASH ATTENTION COMPARISON:
+------------------------------------------------------------
+Standard Attention: 0.1454 ms, 945017.63 TFLOPS
+Best Flash config:   128 threads
+Flash Attention:     0.3889 ms, 353.39 TFLOPS
+Speedup:             0.37x
+====================================================================================================
+PERFORMANCE ANALYSIS: THREAD COUNT ANALYSIS ON NVIDIA B200-SXM6-192GB
+====================================================================================================
+Peak TFLOPS Achieved:   353.39 TFLOPS
+Average TFLOPS:         240.67 TFLOPS
+Roofline Efficiency:    13.4% of peak 1800.0 TFLOPS
+Peak TPS (Tokens/sec):  168.5M tokens/second
+
+
+HARDWARE-SOFTWARE THREAD COUNT ANALYSIS:
+================================================================================
+MMA PARALLELISM & OCCUPANCY TRADEOFFS:
+  • Blackwell GPU: 144 SMs, 64 warps/SM max
+  • MMA instruction: 16×8×16 tensor core operation per warp
+  • Thread count determines warp count: warps = threads ÷ 32
+  • MMA tile M-dimension: mma_M = warps × 16
+
+CONSTRAINT ANALYSIS:
+  • Kernel constraint: (m_block×2) % threads == 0 must hold
+  • Violated constraints are valuable data points for optimization
+  • 64 threads (2 warps): occ=1.00, 67.82 TFLOPS
+  • 128 threads (4 warps): occ=1.00, 353.39 TFLOPS
+  • 256 threads (8 warps): occ=0.50, 300.80 TFLOPS
+
+KEY INSIGHTS:
+  • Thread count is a fundamental architectural parameter
+  • Each warp gets dedicated tensor core MMA operations
+  • More warps = more MMA parallelism but lower occupancy
+  • Constraint violations reveal hardware-software alignment requirements
+  • This is where CuTe DSL exposes GPU microarchitecture details
+Stopping app - local entrypoint completed.
+✓ App completed. View run at https://modal.com/apps/pranay5255/main/ap-nF6JJFbVEemXMd6Kuk03mi
