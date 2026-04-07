@@ -1,0 +1,225 @@
+✓ Initialized. View run at https://modal.com/apps/pranay5255/main/ap-F03ef7UdMBO0RwJw5ukrWU
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/exp_04_head_dimension.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/experiment_utils.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/01_flash_attention_v2_ampere_cudedsl/fla
+│   sh_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/flash
+│   _attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/__ini
+│   t__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_c
+│   ute_runtime.py
+├── 🔨 Created function run_experiment_a100.
+├── 🔨 Created function run_experiment_h100.
+└── 🔨 Created function run_experiment_b200.
+====================================================================================================
+HARDWARE ANALYSIS: HEAD DIMENSION ANALYSIS ON NVIDIA H100-SXM5-96GB
+====================================================================================================
+GPU Architecture:      Hopper (sm_90)
+Tensor Core Throughput: 1513.0 TFLOPS (FP16/BF16)
+HBM Bandwidth:          3.350 TB/s (3350 GB/s)
+Shared Memory/SM:       224 KB
+SM Count:               132
+Max Threads/SM:         2048
+Max Warps/SM:           64
+
+Runtime Device Info:
+GPU: NVIDIA H100 80GB HBM3  |  Compute: 9.0
+Architecture: Hopper
+Shared Memory/SM: 224 KB
+HBM Bandwidth: 3350 GB/s
+
+CONCEPT:
+  head_dim is the K dimension of both GEMMs (S=Q·K^T and O=P·V).
+  The kernel pads head_dim up to a multiple of 32 for alignment.
+  Each MMA k-iteration processes 16 elements, so mma_k_iters = padded_dim // 16.
+  Shared memory = (m·d_pad + 2·n·d_pad) × 2 bytes.
+
+STANDARD ATTENTION (PyTorch SDPA) BASELINE:
+------------------------------------------------------------
+  Running Standard Attention with d=128 (common configuration) ...
+  Standard Attention: 0.2407 ms, 570979.35 TFLOPS
+
+FLASH ATTENTION v2 HEAD DIMENSION SWEEP:
+------------------------------------------------------------
+     d32  padded=  32  smem=  16384 B  k_iters=2  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 32
+  softmax_scale: 0.17677669529663687
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+     d64  padded=  64  smem=  32768 B  k_iters=4  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 64
+  softmax_scale: 0.125
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+     d96  padded=  96  smem=  49152 B  k_iters=6  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 96
+  softmax_scale: 0.10206207261596577
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+    d128  padded= 128  smem=  65536 B  k_iters=8  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+    d160  padded= 160  smem=  81920 B  k_iters=10  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 160
+  softmax_scale: 0.07905694150420949
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+    d192  padded= 192  smem=  98304 B  k_iters=12  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 192
+  softmax_scale: 0.07216878364870323
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+    d256  padded= 256  smem= 131072 B  k_iters=16  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 256
+  softmax_scale: 0.0625
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+
+   d |  d_pad |  waste% |  smem(KB) |  k_iters |         ms |     TFLOPS |    TPS(M)
+--------------------------------------------------------------------------------
+  32 |     32 |    0.0% |      16.0 |        2 |     0.1579 |     217.55 |     414.9
+  64 |     64 |    0.0% |      32.0 |        4 |     0.2162 |     317.85 |     303.1
+  96 |     96 |    0.0% |      48.0 |        6 |     0.2812 |     366.58 |     233.1
+ 128 |    128 |    0.0% |      64.0 |        8 |     0.3656 |     375.93 |     179.3
+ 160 |    160 |    0.0% |      80.0 |       10 |     0.5146 |     333.87 |     127.4
+ 192 |    192 |    0.0% |      96.0 |       12 |     0.9929 |     207.64 |      66.0
+ 256 |    256 |    0.0% |     128.0 |       16 |     3.6377 |      75.56 |      18.0
+
+STANDARD vs FLASH ATTENTION COMPARISON:
+------------------------------------------------------------
+Standard Attention: 0.2407 ms, 570979.35 TFLOPS
+Best Flash config:   d=128 (padded to 128)
+Flash Attention:     0.3656 ms, 375.93 TFLOPS
+Speedup:             0.66x
+====================================================================================================
+PERFORMANCE ANALYSIS: HEAD DIMENSION ANALYSIS ON NVIDIA H100-SXM5-96GB
+====================================================================================================
+Peak TFLOPS Achieved:   375.93 TFLOPS
+Average TFLOPS:         270.71 TFLOPS
+Roofline Efficiency:    17.9% of peak 1513.0 TFLOPS
+Peak TPS (Tokens/sec):  414.9M tokens/second
+
+
+HARDWARE-SOFTWARE HEAD DIMENSION ANALYSIS:
+================================================================================
+PADDING & SHARED MEMORY TRADEOFFS:
+  • Hopper GPU: SMEM padded to multiples of 32 for alignment
+  • Padding formula: d_padded = ceil(d / 32) × 32
+  • Shared memory: (m×d_pad + n×d_pad×2) × 2 bytes
+  • MMA k-iterations: k_iters = d_padded ÷ 16
+
+EFFICIENCY ANALYSIS:
+  • Waste percentage: ((d_padded - d) / d_padded) × 100
+  • TFLOPS calculated on actual d, not padded → padded configs appear slower
+  • d=32→32 (0.0% waste): 16.0 KB SMEM, 217.55 TFLOPS
+  • d=64→64 (0.0% waste): 32.0 KB SMEM, 317.85 TFLOPS
+  • d=96→96 (0.0% waste): 48.0 KB SMEM, 366.58 TFLOPS
+  • d=128→128 (0.0% waste): 64.0 KB SMEM, 375.93 TFLOPS
+  • d=160→160 (0.0% waste): 80.0 KB SMEM, 333.87 TFLOPS
+  • d=192→192 (0.0% waste): 96.0 KB SMEM, 207.64 TFLOPS
+  • d=256→256 (0.0% waste): 128.0 KB SMEM, 75.56 TFLOPS
+
+KEY INSIGHTS:
+  • Head dimension affects both compute and memory patterns
+  • Padding waste is architectural - not algorithmic
+  • Larger head dims increase SMEM pressure but may improve compute efficiency
+  • SMEM limits constrain maximum head dimension per GPU architecture
+  • This demonstrates hardware-imposed constraints on model design
+Stopping app - local entrypoint completed.
+✓ App completed. View run at https://modal.com/apps/pranay5255/main/ap-F03ef7UdMBO0RwJw5ukrWU
