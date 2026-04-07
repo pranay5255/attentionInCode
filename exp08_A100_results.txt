@@ -1,0 +1,11 @@
+╭─ Error ────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Specify a Modal Function or local entrypoint to run. E.g.                                              │
+│ > modal run                                                                                            │
+│ implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_swizzle_patterns.py::my_funct │
+│ ion [..args]                                                                                           │
+│                                                                                                        │
+│ 'implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_swizzle_patterns.py' has the │
+│ following functions and local entrypoints:                                                             │
+│ main / app.main                                                                                        │
+│ run_experiment / app.run_experiment                                                                    │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
