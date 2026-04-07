@@ -1,0 +1,272 @@
+✓ Initialized. View run at https://modal.com/apps/pranay5255/main/ap-SIhVkj2a67I1QGuaowObjw
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/exp_06_causal_vs_dense.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/exper
+│   iments/experiment_utils.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/01_flash_attention_v2_ampere_cudedsl/fla
+│   sh_attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/__ini
+│   t__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/flash
+│   _attention_v2.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/01_flash_attention_v2_ampere_cute_dsl/fa2_c
+│   ute_runtime.py
+├── 🔨 Created function run_experiment_a100.
+├── 🔨 Created function run_experiment_h100.
+└── 🔨 Created function run_experiment_b200.
+====================================================================================================
+HARDWARE ANALYSIS: CAUSAL VS DENSE ATTENTION ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+GPU Architecture:      Ampere (sm_80)
+Tensor Core Throughput: 312.0 TFLOPS (FP16/BF16)
+HBM Bandwidth:          1.555 TB/s (1555 GB/s)
+Shared Memory/SM:       160 KB
+SM Count:               108
+Max Threads/SM:         2048
+Max Warps/SM:           64
+
+Runtime Device Info:
+GPU: NVIDIA A100-SXM4-40GB  |  Compute: 8.0
+Architecture: Ampere
+Shared Memory/SM: 160 KB
+HBM Bandwidth: 1555 GB/s
+
+CONCEPT:
+  In causal attention, position i only attends to positions ≤ i.
+  The kernel skips entire K/V tile blocks above the diagonal:
+    n_block_max = min(ceil((m_block+1)*m / n), total_n_blocks)
+  This means ~50% fewer tiles to process, approaching 2× speedup.
+  However, the last ceil(m/n) blocks need per-element masking,
+  which adds overhead — noticeable at short sequences.
+
+STANDARD ATTENTION (PyTorch SDPA) BASELINES:
+------------------------------------------------------------
+  Running Standard Attention dense with seqlen=4096 ...
+  dense: 0.9449 ms, 145453.36 TFLOPS
+  Running Standard Attention causal with seqlen=4096 ...
+  causal: 0.6655 ms, 103256.57 TFLOPS
+
+FLASH ATTENTION v2 CAUSAL vs DENSE:
+------------------------------------------------------------
+         dense_512  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 512
+  seqlen_k: 512
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+        causal_512  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 512
+  seqlen_k: 512
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: True
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+        dense_1024  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 1024
+  seqlen_k: 1024
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+       causal_1024  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 1024
+  seqlen_k: 1024
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: True
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+        dense_2048  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 2048
+  seqlen_k: 2048
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+       causal_2048  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 2048
+  seqlen_k: 2048
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: True
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+        dense_4096  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+       causal_4096  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 4096
+  seqlen_k: 4096
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: True
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+        dense_8192  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 8192
+  seqlen_k: 8192
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: False
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+       causal_8192  running ...
+Running Ampere SM80 FlashAttentionForward test with:
+  dtype: BFloat16
+  batch_size: 1
+  seqlen_q: 8192
+  seqlen_k: 8192
+  num_head: 16
+  head_dim: 128
+  softmax_scale: 0.08838834764831843
+  m_block_size: 128
+  n_block_size: 64
+  num_threads: 128
+  is_causal: True
+  warmup_iterations: 2
+  iterations: 5
+  skip_ref_check: True
+  use_cold_l2: False
+
+ seqlen |     mode |         ms |     TFLOPS |    TPS(M) |  speedup
+Stopping app - local entrypoint completed.
+--------------------------------------------------------------------
+    512 |    dense |     0.0367 |      58.58 |     223.5 |        -
+    512 |   causal |     0.0334 |      32.16 |     245.4 |    1.10×
+   1024 |    dense |     0.0928 |      92.59 |     176.6 |        -
+   1024 |   causal |     0.0737 |      58.25 |     222.2 |    1.26×
+   2048 |    dense |     0.2642 |     130.06 |     124.0 |        -
+   2048 |   causal |     0.1890 |      90.88 |     173.3 |    1.40×
+   4096 |    dense |     0.8403 |     163.56 |      78.0 |        -
+   4096 |   causal |     0.5841 |     117.65 |     112.2 |    1.44×
+   8192 |    dense |     3.2618 |     168.54 |      40.2 |        -
+   8192 |   causal |     1.8846 |     145.86 |      69.6 |    1.73×
+====================================================================================================
+PERFORMANCE ANALYSIS: CAUSAL VS DENSE ATTENTION ON NVIDIA A100-SXM4-40GB
+====================================================================================================
+Peak TFLOPS Achieved:   168.54 TFLOPS
+Average TFLOPS:         105.81 TFLOPS
+Roofline Efficiency:    33.9% of peak 312.0 TFLOPS
+Peak TPS (Tokens/sec):  245.4M tokens/second
+
+
+HARDWARE-SOFTWARE CAUSAL MASKING ANALYSIS:
+================================================================================
+BLOCK SKIPPING EFFICIENCY:
+  • Ampere GPU block structure: 128×64 tiles
+  • Causal attention skips ~50% of K/V blocks above diagonal
+  • Theoretical speedup: 2× (half the computation)
+  • Actual speedup varies with masking overhead
+
+MASKING OVERHEAD BREAKDOWN:
+  • seqlen=512: 245.4M TPS, 32.16 TFLOPS
+  • seqlen=1024: 222.2M TPS, 58.25 TFLOPS
+  • seqlen=2048: 173.3M TPS, 90.88 TFLOPS
+  • seqlen=4096: 112.2M TPS, 117.65 TFLOPS
+  • seqlen=8192: 69.6M TPS, 145.86 TFLOPS
+
+KEY INSIGHTS:
+  • Causal masking is algorithmic optimization, not just numerical
+  • Block skipping reduces memory traffic by ~50%
+  • Boundary blocks still need per-element masking overhead
+  • At scale, block skipping dominates, approaching theoretical 2× speedup
+  • Flash Attention makes causal attention nearly as efficient as dense
+✓ App completed. View run at https://modal.com/apps/pranay5255/main/ap-SIhVkj2a67I1QGuaowObjw
