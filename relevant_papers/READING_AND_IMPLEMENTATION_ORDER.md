@@ -266,6 +266,8 @@ This should be the repo's implementation order after we finish reading code:
 2. `Implement sliding-window attention locally`
    - reason: first sparse pattern with the least moving parts
    - target: Triton or simple PyTorch-plus-Triton teaching path
+   - CuTe DSL alternative in this repo: `relevant_papers/SLIDING_WINDOW_ATTENTION_CUTE_DSL_STUDY_GUIDE.md`
+     and `implementations/04_sliding_window_attention_hopper_cute_dsl/`
 
 3. `Add clean GQA support to the dense path`
    - reason: low implementation cost, high downstream value
