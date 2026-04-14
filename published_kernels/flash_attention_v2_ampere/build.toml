@@ -1,0 +1,15 @@
+[general]
+name = "flash_attn_v2_ampere"
+backends = ["cuda"]
+
+[torch]
+src = [
+  "torch-ext/torch_binding.cpp",
+  "torch-ext/torch_binding.h",
+]
+
+[kernel.flash_attn_v2]
+backend = "cuda"
+src = ["kernel_src/flash_attention_v2.cu"]
+depends = ["torch"]
+cuda-capabilities = ["8.0"]   # Ampere (A100). Also works on 8.6 (A10/A30), 8.9 (Ada/L40)
