@@ -124,6 +124,20 @@ def get_deep_device_info(gpu_type: str) -> Dict[str, Any]:
     }
 
 
+def require_runtime_cuda(device: Dict[str, Any], gpu_type: str) -> None:
+    """Fail early with a useful message when a Modal worker lacks CUDA."""
+    if device.get("cuda_available"):
+        return
+
+    raise RuntimeError(
+        "CUDA is not available inside the Modal worker for "
+        f"{gpu_type}. This experiment image installs torch==2.11.0+cu130 via "
+        "`nvidia-cutlass-dsl[cu13]`, so the assigned worker needs a CUDA "
+        "13-compatible NVIDIA driver. Retry the run or use an H100/B200 target "
+        "if A100 workers are assigned older 12.x drivers."
+    )
+
+
 def print_hardware_analysis(gpu_type: str, experiment_name: str):
     """Print deep hardware analysis for the experiment."""
     spec = get_gpu_spec(gpu_type)

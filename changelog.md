@@ -127,3 +127,19 @@ Updated the root Modal wrappers so they expose the target implementation app dir
 | [base_experiments/modal_base_exp_01_fa2_ampere.py](base_experiments/modal_base_exp_01_fa2_ampere.py) | Removes the duplicate local Modal app and reuses the FA2 target module app so Modal serves the implementation entrypoint consistently. |
 | [base_experiments/modal_base_exp_02_fmha_cpp_ampere.py](base_experiments/modal_base_exp_02_fmha_cpp_ampere.py) | Removes the duplicate local Modal app and reuses the fused MHA target module app for the Ampere C++ phase. |
 | [base_experiments/modal_base_exp_03_fa3_hopper.py](base_experiments/modal_base_exp_03_fa3_hopper.py) | Removes the duplicate local Modal app and reuses the FA3 Hopper target module app. |
+
+## 2026-04-18 - experiments: require CUDA in FA2 sweeps
+
+Added an explicit CUDA availability guard to the FA2 Ampere experiment suite so Modal workers fail with an actionable runtime message when they are assigned incompatible driver/runtime environments.
+
+| File | Change |
+| --- | --- |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/experiment_utils.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/experiment_utils.py) | Adds `require_runtime_cuda`, which raises a descriptive error when the worker reports no CUDA runtime. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_01_sequence_length_scaling.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_01_sequence_length_scaling.py) | Imports and calls the CUDA guard before running the sequence-length sweep. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_02_tile_size_sweep.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_02_tile_size_sweep.py) | Imports and calls the CUDA guard before running the tile-size sweep. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_03_thread_count.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_03_thread_count.py) | Imports and calls the CUDA guard before running the thread-count sweep. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_04_head_dimension.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_04_head_dimension.py) | Imports and calls the CUDA guard before running the head-dimension sweep. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_05_dtype_comparison.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_05_dtype_comparison.py) | Imports and calls the CUDA guard before running the dtype comparison. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_06_causal_vs_dense.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_06_causal_vs_dense.py) | Imports and calls the CUDA guard before running the causal-versus-dense comparison. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_07_tile_causal_interaction.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_07_tile_causal_interaction.py) | Imports and calls the CUDA guard before running the tile/causal interaction sweep. |
+| [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_swizzle_patterns.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_swizzle_patterns.py) | Imports and calls the CUDA guard before running the swizzle-pattern experiment. |

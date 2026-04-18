@@ -39,6 +39,7 @@ from experiment_utils import (
     calculate_attention_flops,
     print_hardware_analysis,
     print_performance_analysis,
+    require_runtime_cuda,
     run_standard_attention_reference,
 )
 
@@ -133,6 +134,7 @@ def run_experiment():
     print("=" * 90)
 
     device = runtime.current_device_summary()
+    require_runtime_cuda(device, "A100")
     print(f"GPU: {device['device_name']}  |  Compute: {device['compute_capability']}")
     print()
 

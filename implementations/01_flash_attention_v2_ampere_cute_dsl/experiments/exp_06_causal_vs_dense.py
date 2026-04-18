@@ -34,6 +34,7 @@ from experiment_utils import (
     calculate_attention_flops,
     print_hardware_analysis,
     print_performance_analysis,
+    require_runtime_cuda,
     run_standard_attention_reference,
 )
 
@@ -114,6 +115,7 @@ def run_experiment_core(gpu_type: str = "A100"):
     print_hardware_analysis(gpu_type, "Causal vs Dense Attention")
 
     device = runtime.current_device_summary()
+    require_runtime_cuda(device, gpu_type)
     device_info = get_deep_device_info(gpu_type)
     print("Runtime Device Info:")
     print(f"GPU: {device['device_name']}  |  Compute: {device['compute_capability']}")
