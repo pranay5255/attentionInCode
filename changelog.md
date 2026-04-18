@@ -117,3 +117,13 @@ Added the retained Python CuTe DSL example tree and focused CUTLASS attention re
 | [cutlass_references/03_flash_attention_v3_hopper_cudedsl/fmha.py](cutlass_references/03_flash_attention_v3_hopper_cudedsl/fmha.py) | Adds the FlashAttention v3 Hopper CuTe DSL FMHA reference. |
 | [cutlass_references/helpers/__init__.py](cutlass_references/helpers/__init__.py) | Adds the helper package marker for CUTLASS reference imports. |
 | [cutlass_references/helpers/fmha_helpers.py](cutlass_references/helpers/fmha_helpers.py) | Adds FMHA helper utilities required by the Hopper reference run path. |
+
+## 2026-04-18 - experiments: reuse Modal target apps
+
+Updated the root Modal wrappers so they expose the target implementation app directly instead of creating a second wrapper app and local entrypoint.
+
+| File | Change |
+| --- | --- |
+| [base_experiments/modal_base_exp_01_fa2_ampere.py](base_experiments/modal_base_exp_01_fa2_ampere.py) | Removes the duplicate local Modal app and reuses the FA2 target module app so Modal serves the implementation entrypoint consistently. |
+| [base_experiments/modal_base_exp_02_fmha_cpp_ampere.py](base_experiments/modal_base_exp_02_fmha_cpp_ampere.py) | Removes the duplicate local Modal app and reuses the fused MHA target module app for the Ampere C++ phase. |
+| [base_experiments/modal_base_exp_03_fa3_hopper.py](base_experiments/modal_base_exp_03_fa3_hopper.py) | Removes the duplicate local Modal app and reuses the FA3 Hopper target module app. |

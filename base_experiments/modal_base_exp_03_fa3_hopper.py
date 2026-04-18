@@ -11,9 +11,6 @@ import importlib.util
 import sys
 from pathlib import Path
 
-import modal
-
-
 _THIS_FILE = Path(__file__).resolve()
 _REPO_ROOT = _THIS_FILE.parents[1]
 _TARGET_MODULE_PATH = (
@@ -39,9 +36,4 @@ def _load_target_module():
 
 _TARGET = _load_target_module()
 
-app = modal.App("base-exp-03-fa3-hopper")
-
-
-@app.local_entrypoint()
-def main():
-    _TARGET.run_phase3_flash_attention.remote()
+app = _TARGET.app
