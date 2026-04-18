@@ -1,0 +1,95 @@
+✓ Initialized. View run at 
+https://modal.com/apps/pranay5255-80470/main/ap-eGQ05V6r3hAiRCLHVxeDod
+✓ Created objects.
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/03_flash_attention_v3_hopper_cut
+│   e_dsl/modal_cute_flash_attention_v3.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/helpers/fmha_helpers.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/helpers/__init__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/cutlass_references/03_flash_attention_v3_hopper_
+│   cudedsl/fmha.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/03_flash_attention_v3_hopper_cut
+│   e_dsl/__init__.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/03_flash_attention_v3_hopper_cut
+│   e_dsl/flash_attention_v3.py
+├── 🔨 Created mount 
+│   /home/pranay5255/Documents/attentionInCode/implementations/03_flash_attention_v3_hopper_cut
+│   e_dsl/fa3_cute_runtime.py
+└── 🔨 Created function run_phase3_flash_attention.
+================================================================================
+PHASE 3: CUTE DSL FUSED MULTI-HEAD ATTENTION (HOPPER)
+================================================================================
+Device index:        0
+GPU:                 NVIDIA H100 80GB HBM3
+Memory:              85.02 GB
+Compute capability:  9.0
+Hopper or newer:     True
+
+================================================================================
+CORRECTNESS + BENCHMARK
+================================================================================
+Running Hopper SM90 FMHA test with:
+  q_shape: (4, 1024, 8, 64)
+  k_shape: (4, 1024, 8, 64)
+  in_dtype: Float16
+  out_dtype: Float16
+  qk_acc_dtype: Float32
+  pv_acc_dtype: Float32
+  mma_tiler_mn: (64, 128)
+  is_persistent: True
+  is_causal: False
+  bottom_right_align: False
+  scale_q: 1.0
+  scale_k: 1.0
+  scale_v: 1.0
+  inv_scale_o: 1.0
+  scale_softmax: 0.0
+  window_size: (-1, -1)
+  tolerance: 0.02
+  skip_ref_check: False
+  use_cold_l2: False
+Compiling kernel with cute.compile ...
+Compilation time: 2.6958 seconds
+Verifying results...
+Results verified successfully!
+Running Hopper SM90 FMHA test with:
+  q_shape: (4, 1024, 8, 64)
+  k_shape: (4, 1024, 8, 64)
+  in_dtype: Float16
+  out_dtype: Float16
+  qk_acc_dtype: Float32
+  pv_acc_dtype: Float32
+  mma_tiler_mn: (64, 128)
+  is_persistent: True
+  is_causal: True
+  bottom_right_align: False
+  scale_q: 1.0
+  scale_k: 1.0
+  scale_v: 1.0
+  inv_scale_o: 1.0
+  scale_softmax: 0.0
+  window_size: (-1, -1)
+  tolerance: 0.02
+  skip_ref_check: False
+  use_cold_l2: False
+Compiling kernel with cute.compile ...
+Compilation time: 3.8295 seconds
+Verifying results...
+Results verified successfully!
+        case |    dtype | causal |                    shape |         ms |     TFLOPS
+--------------------------------------------------------------------------------------
+   f16_dense |  float16 |  False | B=4,H=8,Sq=1024,Sk=1024,D=64 |     0.0378 |     227.17
+  f16_causal |  float16 |   True | B=4,H=8,Sq=1024,Sk=1024,D=64 |     0.0400 |     107.35
+
+Takeaway:
+- This harness wraps the Hopper CuTe DSL FMHA kernel (SM90).
+- Key Hopper features: TMA, warp specialization, persistent kernel, FP8.
+- Default suite runs one dense case and one causal case on FP16.
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/pranay5255-80470/main/ap-eGQ05V6r3hAiRCLHVxeDod

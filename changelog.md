@@ -153,3 +153,11 @@ Removed stale publishing-blocker notes for kernels whose reference source and he
 | [published_kernels/flash_attention_v3_hopper/PUBLISHING_BLOCKED.md](published_kernels/flash_attention_v3_hopper/PUBLISHING_BLOCKED.md) | Removes the stale FA3 Hopper publishing-blocker note. |
 | [published_kernels/fused_mha_ampere_cpp/PUBLISHING_BLOCKED.md](published_kernels/fused_mha_ampere_cpp/PUBLISHING_BLOCKED.md) | Removes the stale fused MHA Ampere C++ publishing-blocker note. |
 | [published_kernels/sliding_window_attention_hopper/PUBLISHING_BLOCKED.md](published_kernels/sliding_window_attention_hopper/PUBLISHING_BLOCKED.md) | Removes the stale sliding-window Hopper publishing-blocker note. |
+
+## 2026-04-18 - results: add FA3 base experiment log
+
+Recorded the successful Modal FA3 Hopper base experiment run for traceability.
+
+| File | Change |
+| --- | --- |
+| [experiment_basefa3.log](experiment_basefa3.log) | Adds the Modal run output showing H100 execution, dense and causal FA3 correctness checks, compile timings, and measured TFLOPS for the base Hopper FMHA experiment. |
