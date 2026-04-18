@@ -143,3 +143,13 @@ Added an explicit CUDA availability guard to the FA2 Ampere experiment suite so 
 | [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_06_causal_vs_dense.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_06_causal_vs_dense.py) | Imports and calls the CUDA guard before running the causal-versus-dense comparison. |
 | [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_07_tile_causal_interaction.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_07_tile_causal_interaction.py) | Imports and calls the CUDA guard before running the tile/causal interaction sweep. |
 | [implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_swizzle_patterns.py](implementations/01_flash_attention_v2_ampere_cute_dsl/experiments/exp_08_swizzle_patterns.py) | Imports and calls the CUDA guard before running the swizzle-pattern experiment. |
+
+## 2026-04-18 - docs: retire stale publishing blocker notes
+
+Removed stale publishing-blocker notes for kernels whose reference source and helper context are now tracked directly in the curated reference tree.
+
+| File | Change |
+| --- | --- |
+| [published_kernels/flash_attention_v3_hopper/PUBLISHING_BLOCKED.md](published_kernels/flash_attention_v3_hopper/PUBLISHING_BLOCKED.md) | Removes the stale FA3 Hopper publishing-blocker note. |
+| [published_kernels/fused_mha_ampere_cpp/PUBLISHING_BLOCKED.md](published_kernels/fused_mha_ampere_cpp/PUBLISHING_BLOCKED.md) | Removes the stale fused MHA Ampere C++ publishing-blocker note. |
+| [published_kernels/sliding_window_attention_hopper/PUBLISHING_BLOCKED.md](published_kernels/sliding_window_attention_hopper/PUBLISHING_BLOCKED.md) | Removes the stale sliding-window Hopper publishing-blocker note. |
