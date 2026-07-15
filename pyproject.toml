@@ -12,8 +12,18 @@ dependencies = [
     "pytest",
 ]
 
-[tool.uv]
-dev-dependencies = []
+[project.optional-dependencies]
+modal = ["modal>=1.0,<2"]
+
+[dependency-groups]
+dev = ["ruff>=0.12,<1"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["attention_in_code"]
