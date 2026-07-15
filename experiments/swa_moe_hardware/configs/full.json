@@ -1,0 +1,37 @@
+{
+  "name": "swa-moe-full",
+  "seed": 17,
+  "validate_outputs": true,
+  "validation_sequence_limit": 1024,
+  "attention": {
+    "batch_size": 1,
+    "sequence_lengths": [2048, 4096, 8192],
+    "num_heads": 32,
+    "head_dim": 128,
+    "windows": [256, 512, 1024, 2048],
+    "dtype": "bfloat16",
+    "modes": ["forward", "training"],
+    "warmup_iterations": 5,
+    "iterations": 30,
+    "block_size": 128
+  },
+  "moe": {
+    "enabled": true,
+    "hidden_size": 4096,
+    "intermediate_size": 14336,
+    "expert_counts": [256, 512, 1024],
+    "routing_variants": ["top8", "top7_plus_1_shared"],
+    "warmup_iterations": 5,
+    "iterations": 30
+  },
+  "model": {
+    "num_layers": 78,
+    "swa_to_global_ratios": [5, 7],
+    "moe_layouts": ["interleaved_moe_dense", "moe_every_layer"],
+    "baseline_attention_pattern": "5:1",
+    "baseline_moe_layout": "interleaved_moe_dense",
+    "baseline_expert_count": 512,
+    "baseline_routing_variant": "top8",
+    "bootstrap_samples": 10000
+  }
+}
