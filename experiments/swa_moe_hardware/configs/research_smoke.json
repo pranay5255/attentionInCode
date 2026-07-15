@@ -1,0 +1,62 @@
+{
+  "schema_version": 2,
+  "name": "swa-moe-research-smoke-v2",
+  "campaign": {
+    "suites": ["distributed_moe"],
+    "hardware": ["A100-40GB", "H100", "B200"],
+    "world_sizes": [2],
+    "replicates": 1,
+    "seed": 17,
+    "runtime_profiles": ["baseline"],
+    "gpu_hour_budget": 0.5,
+    "budget_reserve_fraction": 0.15,
+    "max_parallel": 1,
+    "output_dir": "runs/swa_moe_hardware"
+  },
+  "measurement": {
+    "warmup_iterations": 1,
+    "iterations": 3,
+    "bootstrap_samples": 200,
+    "drift_threshold_pct": 5.0,
+    "validation_tokens": 16,
+    "shard_size": 12,
+    "estimated_attention_seconds": 1.0,
+    "estimated_single_moe_seconds": 1.0,
+    "estimated_distributed_seconds": 2.0,
+    "estimated_sentinel_seconds": 0.5
+  },
+  "attention": {
+    "sequence_lengths": [1024],
+    "windows": [128, "global"],
+    "head_geometries": [[64, 64], [32, 128], [16, 256]],
+    "batch_sizes": [1],
+    "dtypes": ["bfloat16", "float16"],
+    "modes": ["forward", "training"],
+    "block_sizes": [64, 128, 256],
+    "cell_count": 8
+  },
+  "moe": {
+    "token_counts": [32, 64, 128],
+    "expert_counts": [64, 256, 512, 1024],
+    "routing_variants": ["top1", "top2", "top4", "top8", "top7_plus_1_shared"],
+    "dimensions": [[128, 256], [256, 512], [512, 1024]],
+    "routing_profiles": ["balanced", "zipf1.0", "hot80_20"],
+    "capacity_factors": [1.0, 1.25, 2.0],
+    "modes": ["forward", "training"],
+    "active_weight_experts": 2,
+    "single_gpu_cell_count": 10
+  },
+  "distributed": {
+    "world_sizes": [2, 4, 8],
+    "collective_bytes": [262144],
+    "collectives": ["all_to_all", "all_reduce"],
+    "overlap": [false],
+    "cell_count_per_world_size": 12
+  },
+  "composition": {
+    "depths": [32, 78, 96],
+    "attention_schedules": ["all_global", "all_swa", "1:1", "3:1", "5:1", "7:1", "15:1"],
+    "ffn_layouts": ["interleaved_moe_dense", "moe_every_layer"],
+    "expert_parallel_sizes": [1, 2, 4, 8]
+  }
+}
