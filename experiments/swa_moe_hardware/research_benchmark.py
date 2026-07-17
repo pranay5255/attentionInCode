@@ -43,6 +43,23 @@ EXPERIMENTAL_ENVIRONMENT_NAMES = (
     "TORCHINDUCTOR_FORCE_DISABLE_CACHES",
 )
 
+_FLEX_RECOMPILE_LIMIT = 64
+_FLEX_FORWARD_BLOCK_SIZE = 64
+torch._dynamo.config.recompile_limit = _FLEX_RECOMPILE_LIMIT
+
+
+def _flex_kernel_options(mask_block_size: int) -> dict[str, int]:
+    """Keep the forward kernel tile compatible with every configured mask block."""
+    if mask_block_size % _FLEX_FORWARD_BLOCK_SIZE:
+        raise ValueError(
+            "FlexAttention mask block size must be divisible by "
+            f"{_FLEX_FORWARD_BLOCK_SIZE}, got {mask_block_size}"
+        )
+    return {
+        "fwd_BLOCK_M": _FLEX_FORWARD_BLOCK_SIZE,
+        "fwd_BLOCK_N": _FLEX_FORWARD_BLOCK_SIZE,
+    }
+
 
 def _dtype(name: str) -> torch.dtype:
     return {"bfloat16": torch.bfloat16, "float16": torch.float16}[name]
@@ -124,6 +141,20 @@ def _attention_preflight_bytes(axes: dict[str, Any]) -> int:
     )
 
 
+def _attention_backend_limitation(axes: dict[str, Any]) -> str | None:
+    if (
+        axes["window"] is not None
+        and axes["mode"] == "training"
+        and int(axes["block_size"]) < 128
+    ):
+        return (
+            "PyTorch 2.11 FlexAttention backward has no valid compiled kernel "
+            "choice for a 64-token sparse mask block across all campaign head "
+            "geometries; retain block_size=64 for forward measurements only"
+        )
+    return None
+
+
 def benchmark_attention_case(
     case: dict[str, Any], *, config_data: dict[str, Any], profile_key: str
 ) -> dict[str, Any]:
@@ -131,11 +162,16 @@ def benchmark_attention_case(
     axes = case["axes"]
     available = torch.cuda.get_device_properties(0).total_memory
     required = _attention_preflight_bytes(axes)
+    backend_limitation = _attention_backend_limitation(axes)
     feasibility = {
-        "preflight_feasible": required <= 0.8 * available,
+        "preflight_feasible": (
+            required <= 0.8 * available and backend_limitation is None
+        ),
         "estimated_required_bytes": required,
         "available_bytes": available,
         "preflight_fraction": required / available,
+        "backend_supported": backend_limitation is None,
+        "backend_limitation": backend_limitation,
         "oom": False,
     }
     if not feasibility["preflight_feasible"]:
@@ -179,6 +215,7 @@ def benchmark_attention_case(
         context = sdpa_kernel(SDPBackend.FLASH_ATTENTION)
     else:
         backend = "torch_flex_attention"
+        kernel_options = _flex_kernel_options(int(axes["block_size"]))
         block_mask = create_block_mask(
             _window_mask(int(window)),
             B=None,
@@ -191,7 +228,13 @@ def benchmark_attention_case(
         block_sparsity_pct = float(block_mask.sparsity())
 
         def eager_operation() -> torch.Tensor:
-            return flex_attention(q, k, v, block_mask=block_mask)
+            return flex_attention(
+                q,
+                k,
+                v,
+                block_mask=block_mask,
+                kernel_options=kernel_options,
+            )
 
     if compiled:
         compile_kwargs: dict[str, Any] = {"fullgraph": True, "dynamic": False}
@@ -242,6 +285,8 @@ def benchmark_attention_case(
         "axes": axes,
         "status": "succeeded",
         "backend": backend,
+        "compile_recompile_limit": _FLEX_RECOMPILE_LIMIT if compiled else None,
+        "kernel_options": kernel_options if window is not None else None,
         "compile_time_definition": (
             "first compiled invocation including graph capture, code generation, and execution"
         ),
