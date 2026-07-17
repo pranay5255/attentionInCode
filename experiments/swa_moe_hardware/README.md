@@ -265,6 +265,10 @@ sends seven copies through the network and evaluates the shared expert locally. 
 capacity remains analytical; timed local expert work uses a capped active-weight bank and is a
 lower-bound proxy.
 
+PyTorch 2.11 FlexAttention does not expose a valid compiled backward kernel for the campaign's
+64-token sparse-mask block across all selected head geometries. Those training cells remain in the
+coverage matrix but are marked `skipped_preflight`; forward cells still measure the 64-token block.
+
 Research reports add per-case and hierarchical-replicate CSVs, environment effects, planned versus
 executed coverage, model compositions, and six plot families for scaling, communication phases,
 imbalance/capacity, runtime profiles, feasibility, and replicate variance. `EGFLOPs*`, `EGTime*`,
