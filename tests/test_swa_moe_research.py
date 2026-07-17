@@ -28,6 +28,11 @@ from experiments.swa_moe_hardware.research_cases import (
     expand_single_moe_cells,
     expected_core_counts,
 )
+from experiments.swa_moe_hardware.research_benchmark import (
+    _FLEX_RECOMPILE_LIMIT,
+    _attention_backend_limitation,
+    _flex_kernel_options,
+)
 from experiments.swa_moe_hardware.research_config import (
     ResearchCampaignConfig,
     ResearchConfig,
@@ -121,6 +126,24 @@ def test_research_matrix_counts_axes_and_ids_are_stable():
         distributed = expand_distributed_cells(config, world_size)
         assert len(distributed) == 46
         assert sum(item["case_kind"] == "collective" for item in distributed) == 24
+
+
+def test_research_flex_compiler_supports_full_shards_and_mask_blocks():
+    assert _FLEX_RECOMPILE_LIMIT >= 4 * ResearchConfig().measurement.shard_size
+    assert torch._dynamo.config.recompile_limit == _FLEX_RECOMPILE_LIMIT
+    for mask_block_size in ResearchConfig().attention.block_sizes:
+        options = _flex_kernel_options(mask_block_size)
+        assert mask_block_size % options["fwd_BLOCK_M"] == 0
+        assert mask_block_size % options["fwd_BLOCK_N"] == 0
+
+    with pytest.raises(ValueError, match="must be divisible"):
+        _flex_kernel_options(96)
+
+    common_axes = {"window": 512, "mode": "training", "block_size": 64}
+    assert "FlexAttention backward" in _attention_backend_limitation(common_axes)
+    assert _attention_backend_limitation({**common_axes, "block_size": 128}) is None
+    assert _attention_backend_limitation({**common_axes, "mode": "forward"}) is None
+    assert _attention_backend_limitation({**common_axes, "window": None}) is None
 
 
 def test_manifest_deduplicates_and_uses_exact_modal_requests():
