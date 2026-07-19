@@ -1,0 +1,22 @@
+{
+  "id": "05_runtime_profile_effects",
+  "title": "Runtime-profile effects",
+  "sources": [
+    "environment_effects.csv"
+  ],
+  "source_subset": "All 849 successful profile-versus-baseline attention matches: 283 for each alternate compiler profile.",
+  "unit_of_analysis": "One controlled workload matched between an alternate runtime profile and baseline.",
+  "x_definition": "Compiler profile: cache-disabled default compilation, reduce-overhead, or max-autotune without CUDA graphs.",
+  "y_definition": "100 \u00d7 (profile median latency \u2212 baseline median latency) / baseline median latency.",
+  "encodings": "Facet is GPU; each point is a match; boxes show quartiles and the within-profile median.",
+  "n_definition": "n is matched profile/baseline effects in that GPU facet; 849 effects total.",
+  "interpretation": "Negative values mean the alternate profile was faster than baseline; positive values mean it was slower.",
+  "limitations": "Effects remain workload-specific even after matching; boxplot summaries do not establish one universal compiler winner.",
+  "row_count": 849,
+  "distinct_cells": 849,
+  "generated_at": "2026-07-19T15:26:30.530999+00:00",
+  "png": "figures/05_runtime_profile_effects.png",
+  "svg": "figures/05_runtime_profile_effects.svg",
+  "data": "data/05_runtime_profile_effects.csv",
+  "metadata": "metadata/05_runtime_profile_effects.json"
+}
