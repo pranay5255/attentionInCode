@@ -1,0 +1,22 @@
+{
+  "id": "09_distributed_scaling",
+  "title": "Distributed-MoE scaling",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "The six end-to-end workload groups with successful measurements at world sizes 2, 4, and 8 (18 cells).",
+  "unit_of_analysis": "One exact workload trajectory; each trajectory contains three world-size cells.",
+  "x_definition": "World size: number of GPUs participating in expert parallelism.",
+  "y_definition": "Left: measured tokens/s. Right: 100 \u00d7 (throughput at p / throughput at 2) / (p / 2).",
+  "encodings": "Each colored line is one complete workload group; color is GPU; the black dashed line is the median across the six groups.",
+  "n_definition": "n is six complete workload groups, not all 198 end-to-end cells; each median contains six group values.",
+  "interpretation": "Throughput shows delivered work; 100% efficiency means throughput grew in direct proportion to GPU count relative to the 2-GPU baseline.",
+  "limitations": "Only exact workloads with all three world sizes enter this figure; it does not pool partially supported workload identities.",
+  "row_count": 18,
+  "distinct_cells": 18,
+  "generated_at": "2026-07-19T15:26:36.322401+00:00",
+  "png": "figures/09_distributed_scaling.png",
+  "svg": "figures/09_distributed_scaling.svg",
+  "data": "data/09_distributed_scaling.csv",
+  "metadata": "metadata/09_distributed_scaling.json"
+}
