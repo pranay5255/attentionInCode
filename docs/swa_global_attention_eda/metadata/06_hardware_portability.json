@@ -1,0 +1,22 @@
+{
+  "id": "06_hardware_portability",
+  "title": "Hardware portability",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "Only the 69 successful baseline attention workloads measured on A100-40GB, H100, and B200 with every non-hardware axis identical.",
+  "unit_of_analysis": "One complete three-GPU workload triplet.",
+  "x_definition": "A100 median latency divided by H100 median latency.",
+  "y_definition": "H100 median latency divided by B200 median latency.",
+  "encodings": "Color is attention density; marker is mode; point area increases with sequence length; reference lines are ratio 1. Axes use logarithmic spacing but retain direct ratio labels.",
+  "n_definition": "n is complete workload triplets, so each point summarizes three successful cells.",
+  "interpretation": "A ratio above 1 means the newer GPU on that axis is faster for the same workload.",
+  "limitations": "The 69 complete triplets are the supported portability subset; no value is imputed for incomplete workload triples.",
+  "row_count": 69,
+  "distinct_cells": null,
+  "generated_at": "2026-07-19T15:26:31.074994+00:00",
+  "png": "figures/06_hardware_portability.png",
+  "svg": "figures/06_hardware_portability.svg",
+  "data": "data/06_hardware_portability.csv",
+  "metadata": "metadata/06_hardware_portability.json"
+}
