@@ -1,0 +1,126 @@
+{
+  "generated_at": "2026-07-19T15:26:37.450107+00:00",
+  "measurement_protocol": {
+    "warmup_iterations_per_run": 3,
+    "timed_iterations_per_run": 10,
+    "intended_fresh_container_replicates_per_cell": 2
+  },
+  "success_buckets": {
+    "runs": {
+      "total": 3670,
+      "by_suite": {
+        "attention": 2340,
+        "distributed_moe": 814,
+        "single_moe": 516
+      },
+      "distributed_by_kind": {
+        "collective": 427,
+        "end_to_end": 387
+      }
+    },
+    "cells": {
+      "total": 1842,
+      "by_suite": {
+        "attention": 1170,
+        "distributed_moe": 414,
+        "single_moe": 258
+      },
+      "distributed_by_kind": {
+        "collective": 216,
+        "end_to_end": 198
+      },
+      "by_successful_replicates": {
+        "1": 14,
+        "2": 1828
+      },
+      "two_replicates": 1828,
+      "one_replicate": 14
+    }
+  },
+  "retained_figures": {
+    "01_replicate_agreement": {
+      "rows": 1828,
+      "distinct_cells": 1828
+    },
+    "02_attention_ecdf": {
+      "rows": 1170,
+      "distinct_cells": 1170
+    },
+    "03_block_size_response": {
+      "rows": 42,
+      "distinct_cells": null
+    },
+    "04_memory_vs_gpu_time": {
+      "rows": 283,
+      "distinct_cells": 283
+    },
+    "05_runtime_profile_effects": {
+      "rows": 849,
+      "distinct_cells": 849
+    },
+    "06_hardware_portability": {
+      "rows": 69,
+      "distinct_cells": null
+    },
+    "07_single_moe_capacity_throughput": {
+      "rows": 258,
+      "distinct_cells": 258
+    },
+    "08_collective_bandwidth": {
+      "rows": 216,
+      "distinct_cells": 216
+    },
+    "09_distributed_scaling": {
+      "rows": 18,
+      "distinct_cells": 18
+    },
+    "10_distributed_phase_shares": {
+      "rows": 990,
+      "distinct_cells": 198
+    }
+  },
+  "replicate_agreement": {
+    "cells": 1828,
+    "median_absolute_difference_pct": 3.5982524031043654,
+    "p90_absolute_difference_pct": 25.150384060443002
+  },
+  "block_size_response": {
+    "pairs": 42,
+    "pairs_by_comparison": {
+      "block 256 / block 128": 30,
+      "block 64 / block 256": 12
+    }
+  },
+  "memory_vs_gpu_time": {
+    "cells": 283,
+    "pareto_cells": 31
+  },
+  "runtime_profile_effects": {
+    "matches": 849,
+    "matches_by_profile": {
+      "compile-disable-caches": 283,
+      "compile-max-autotune-no-cudagraphs": 283,
+      "compile-reduce-overhead": 283
+    }
+  },
+  "hardware_portability": {
+    "complete_triplets": 69,
+    "median_a100_to_h100_ratio": 2.7964736628138294,
+    "median_h100_to_b200_ratio": 1.19506442864163
+  },
+  "collective_bandwidth": {
+    "cells": 216,
+    "cells_by_collective": {
+      "all_reduce": 108,
+      "all_to_all": 108
+    }
+  },
+  "distributed_scaling": {
+    "complete_groups": 6,
+    "cells": 18
+  },
+  "distributed_phase_shares": {
+    "end_to_end_cells": 198,
+    "expanded_phase_rows": 990
+  }
+}
