@@ -1,0 +1,22 @@
+{
+  "id": "10_distributed_phase_shares",
+  "title": "Distributed-MoE phase shares",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "All 198 successful end-to-end distributed-MoE cells, summarized separately from the collective microbenchmarks.",
+  "unit_of_analysis": "One cell-phase share; each of 198 cells contributes five shares that sum to approximately 100%.",
+  "x_definition": "World size: 2, 4, or 8 GPUs.",
+  "y_definition": "Within each GPU/mode/world-size group, the median percentage of cell latency assigned to each phase.",
+  "encodings": "Facet is GPU and mode; stacked color is pack, dispatch, expert compute, return, or combine.",
+  "n_definition": "n in each facet is distinct end-to-end cells before phase expansion; 198 cells total.",
+  "interpretation": "Pack forms routed buffers; dispatch sends them to expert ranks; expert compute runs expert work; return sends outputs back; combine accumulates outputs into token order.",
+  "limitations": "Stacks summarize a heterogeneous successful-cell sample; medians of individual phase shares need not total exactly 100 before plotting.",
+  "row_count": 990,
+  "distinct_cells": 198,
+  "generated_at": "2026-07-19T15:26:37.439138+00:00",
+  "png": "figures/10_distributed_phase_shares.png",
+  "svg": "figures/10_distributed_phase_shares.svg",
+  "data": "data/10_distributed_phase_shares.csv",
+  "metadata": "metadata/10_distributed_phase_shares.json"
+}
