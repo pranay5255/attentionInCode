@@ -1,0 +1,23 @@
+{
+  "id": "04_memory_vs_gpu_time",
+  "title": "Memory versus GPU time",
+  "sources": [
+    "aggregate_measurements.csv",
+    "case_measurements.csv"
+  ],
+  "source_subset": "All 283 successful baseline attention cells with measured peak reserved memory.",
+  "unit_of_analysis": "One distinct baseline attention parameter cell.",
+  "x_definition": "Peak CUDA reserved memory in GiB, on a log scale.",
+  "y_definition": "Cell median latency divided by batch size \u00d7 sequence length, in ms per batch-token position, on a log scale.",
+  "encodings": "Color is attention density; point area increases with sequence length; black outlines and connecting lines mark Pareto cells within one GPU/mode facet.",
+  "n_definition": "n in each facet is the number of distinct baseline attention cells on that GPU and mode; 283 cells total.",
+  "interpretation": "Lower-left cells use less reserved memory and less normalized GPU time; outlined points are not dominated on both axes within their facet.",
+  "limitations": "The normalization does not make training and forward equivalent, so Pareto dominance is never pooled across modes or GPUs.",
+  "row_count": 283,
+  "distinct_cells": 283,
+  "generated_at": "2026-07-19T15:26:29.613508+00:00",
+  "png": "figures/04_memory_vs_gpu_time.png",
+  "svg": "figures/04_memory_vs_gpu_time.svg",
+  "data": "data/04_memory_vs_gpu_time.csv",
+  "metadata": "metadata/04_memory_vs_gpu_time.json"
+}
