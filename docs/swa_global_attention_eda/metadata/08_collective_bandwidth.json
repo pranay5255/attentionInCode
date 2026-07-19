@@ -1,0 +1,22 @@
+{
+  "id": "08_collective_bandwidth",
+  "title": "Collective bandwidth",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "All 216 successful collective microbenchmark cells: 108 all-reduce and 108 all-to-all.",
+  "unit_of_analysis": "One distinct collective \u00d7 GPU \u00d7 world-size \u00d7 message-size \u00d7 overlap cell.",
+  "x_definition": "Payload bytes contributed by each rank, displayed as MiB per rank on a base-2 log scale.",
+  "y_definition": "Effective collective bandwidth in decimal GB/s, computed with collective-specific traffic factors.",
+  "encodings": "Rows separate collective type; columns separate GPU; color is world size; dashed lines enable asynchronous overlap.",
+  "n_definition": "n is distinct collective cells in a facet; all 216 cells are represented and incompatible collectives are never pooled.",
+  "interpretation": "Rising curves show message-size amortization; the gap between solid and dashed curves shows the measured effect of asynchronous overlap.",
+  "limitations": "Effective bandwidth is an algorithm-aware derived rate, not a direct physical-link counter.",
+  "row_count": 216,
+  "distinct_cells": 216,
+  "generated_at": "2026-07-19T15:26:35.557450+00:00",
+  "png": "figures/08_collective_bandwidth.png",
+  "svg": "figures/08_collective_bandwidth.svg",
+  "data": "data/08_collective_bandwidth.csv",
+  "metadata": "metadata/08_collective_bandwidth.json"
+}
