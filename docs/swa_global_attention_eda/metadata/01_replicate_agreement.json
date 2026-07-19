@@ -1,0 +1,22 @@
+{
+  "id": "01_replicate_agreement",
+  "title": "Bland\u2013Altman replicate agreement",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "Successful cells with exactly two fresh-container replicate medians (1,828 cells).",
+  "unit_of_analysis": "One distinct parameter cell represented by its two replicate medians.",
+  "x_definition": "Arithmetic mean of replicate 1 and replicate 2 median latency, in milliseconds.",
+  "y_definition": "Signed replicate difference: 100 \u00d7 (replicate 2 \u2212 replicate 1) / their mean.",
+  "encodings": "Color is GPU; marker shape is suite; dashed horizontal lines mark \u00b110% disagreement.",
+  "n_definition": "n is the number of distinct two-replicate cells, not timed iterations.",
+  "interpretation": "Points near zero reproduced closely; the sign only records replicate order and is not a treatment effect.",
+  "limitations": "Two replicates reveal disagreement but provide limited information about the full run-to-run distribution.",
+  "row_count": 1828,
+  "distinct_cells": 1828,
+  "generated_at": "2026-07-19T15:26:26.105604+00:00",
+  "png": "figures/01_replicate_agreement.png",
+  "svg": "figures/01_replicate_agreement.svg",
+  "data": "data/01_replicate_agreement.csv",
+  "metadata": "metadata/01_replicate_agreement.json"
+}
