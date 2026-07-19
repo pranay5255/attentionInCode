@@ -1,3 +1,6 @@
 __pycache__/
 *.py[cod]
 runs/
+
+# Independent nested repository
+/dense8b-engine/
