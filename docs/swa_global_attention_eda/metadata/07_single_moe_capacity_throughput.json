@@ -1,0 +1,22 @@
+{
+  "id": "07_single_moe_capacity_throughput",
+  "title": "Single-GPU MoE capacity and throughput",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "All 258 successful single-GPU MoE cells.",
+  "unit_of_analysis": "One distinct single-GPU MoE parameter cell.",
+  "x_definition": "Configured number of experts, on a base-2 log scale.",
+  "y_definition": "Measured tokens per second, on a log scale.",
+  "encodings": "Facet is GPU and execution mode; color is capacity factor; point area increases with token count; lines connect within-facet medians.",
+  "n_definition": "n is distinct single-GPU MoE cells in that GPU/mode facet; 258 cells total.",
+  "interpretation": "Within a facet, vertical separation shows how throughput varies over sampled expert counts and capacity factors without mixing training with forward runs.",
+  "limitations": "Routing variant, routing skew, token count, and model dimensions still vary within each facet, so lines are descriptive medians rather than isolated causal effects.",
+  "row_count": 258,
+  "distinct_cells": 258,
+  "generated_at": "2026-07-19T15:26:33.377213+00:00",
+  "png": "figures/07_single_moe_capacity_throughput.png",
+  "svg": "figures/07_single_moe_capacity_throughput.svg",
+  "data": "data/07_single_moe_capacity_throughput.csv",
+  "metadata": "metadata/07_single_moe_capacity_throughput.json"
+}
