@@ -1,0 +1,22 @@
+{
+  "id": "03_block_size_response",
+  "title": "Matched block-size response",
+  "sources": [
+    "aggregate_measurements.csv"
+  ],
+  "source_subset": "The 42 successful windowed-attention pairs matched on every controlled axis except block size.",
+  "unit_of_analysis": "One exact two-block parameter match.",
+  "x_definition": "GPU family.",
+  "y_definition": "Numerator-block median latency divided by denominator-block median latency.",
+  "encodings": "Panel identifies the block-size ratio; points are matches; black bars are within-GPU medians.",
+  "n_definition": "n is the number of exact block-size pairs in that panel (30 and 12; 42 total).",
+  "interpretation": "Below 1 means the numerator block is faster; above 1 means the denominator block is faster.",
+  "limitations": "The two panels cover different workloads and no inference should chain their ratios into an unobserved 64-versus-128 comparison.",
+  "row_count": 42,
+  "distinct_cells": null,
+  "generated_at": "2026-07-19T15:26:27.593068+00:00",
+  "png": "figures/03_block_size_response.png",
+  "svg": "figures/03_block_size_response.svg",
+  "data": "data/03_block_size_response.csv",
+  "metadata": "metadata/03_block_size_response.json"
+}
