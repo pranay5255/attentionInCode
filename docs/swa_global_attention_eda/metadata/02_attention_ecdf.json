@@ -1,0 +1,23 @@
+{
+  "id": "02_attention_ecdf",
+  "title": "Attention latency and tail ECDFs",
+  "sources": [
+    "aggregate_measurements.csv",
+    "case_measurements.csv"
+  ],
+  "source_subset": "All 1,170 successful attention cells across the four observed runtime profiles.",
+  "unit_of_analysis": "One distinct successful attention parameter cell.",
+  "x_definition": "Left: cell median latency in ms. Right: the cell's p95 latency divided by its median latency.",
+  "y_definition": "Percentage of cells in that GPU/mode curve whose X value is at or below the plotted value.",
+  "encodings": "Color is GPU and line style is forward versus training; each GPU/mode combination has one curve.",
+  "n_definition": "n in each legend label is distinct cells in that curve, not sequence length or iteration count.",
+  "interpretation": "A curve farther left reaches the same cumulative percentage at a smaller value, within its sampled workload mix.",
+  "limitations": "Curves contain different sampled configurations and are descriptive distributions, not controlled GPU or attention-type comparisons.",
+  "row_count": 1170,
+  "distinct_cells": 1170,
+  "generated_at": "2026-07-19T15:26:27.058651+00:00",
+  "png": "figures/02_attention_ecdf.png",
+  "svg": "figures/02_attention_ecdf.svg",
+  "data": "data/02_attention_ecdf.csv",
+  "metadata": "metadata/02_attention_ecdf.json"
+}
